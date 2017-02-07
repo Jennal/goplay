@@ -1,0 +1,10 @@
+@startuml
+interface Server {
+    + void Start()
+    + void Stop()
+}
+
+interface Client {
+    + void Connect()
+}
+@enduml
