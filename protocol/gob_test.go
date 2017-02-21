@@ -10,10 +10,9 @@ func TestGobDecode(t *testing.T) {
 
 	content := []int{1, 2, 3}
 	pack := pkg.Header{
-		Type:        pkg.PKG_NOTIFY,
-		Encoding:    pkg.ENCODING_GOB,
-		ID:          2,
-		ContentSize: len(content),
+		Type:     pkg.PKG_NOTIFY,
+		Encoding: pkg.ENCODING_GOB,
+		ID:       2,
 	}
 	buffer := encoder.Marshal(&pack, content)
 
