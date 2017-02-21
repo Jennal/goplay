@@ -1,0 +1,3 @@
+package: github.com/Jennal/goplay
+import:
+- package: github.com/golang/protobuf
