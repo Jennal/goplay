@@ -1,10 +1,56 @@
 @startuml
-interface Server {
-    + void Start()
-    + void Stop()
+
+package transfer {
+    interface Transfer {
+        + bool IsConnected;
+
+        + void Connect(string host, int port);
+        + []byte Recv();
+        + void Send([]byte);
+    }
+
+    interface Server {
+        + []Client GetClients();
+
+        + void Start()
+        + void Stop()
+    }
 }
 
-interface Client {
-    + void Connect()
+package protocol {
+    interface Encoder {
+        + []byte Marshal(interface{});
+    }
+
+    interface Decoder {
+        + interface{} Unmarshal([]byte);
+    }
+
+    interface Encode extends Encoder, Decoder {
+    }
 }
+
+package handler/package {
+    enum PackageType extends Byte {
+        PKG_NOTIFY,
+        PKG_NOTIFY_RESPONSE,
+        PKG_REQUEST,
+        PKG_RESPONSE,
+    }
+
+    enum EncodingType extends Byte {
+        ENCODING_PROTOBUF,
+        ENCODING_GOB,
+        ENCODING_JSON,
+        ENCODING_BSON,
+    }
+
+    class Package {
+        PackageType Type;
+        EncodingType Encoding;
+        int ID;
+        interface{} Content;
+    }
+}
+
 @enduml
