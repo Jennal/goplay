@@ -15,7 +15,7 @@ func (self HeaderEncoder) MarshalHeader(header *pkg.Header) []byte {
 		byte(header.Encoding),
 		byte(header.ID),
 	})
-	binary.Write(&buffer, binary.LittleEndian, header.ContentSize)
+	binary.Write(&buffer, binary.BigEndian, header.ContentSize)
 
 	return buffer.Bytes()
 }

@@ -20,7 +20,7 @@ func (self HeaderDecoder) UnmarshalHeader(data []byte, header *pkg.Header) int {
 
 	fmt.Println("ContentSize", header.ContentSize, data)
 	r := bytes.NewReader(data[3:7])
-	binary.Read(r, binary.LittleEndian, &header.ContentSize)
+	binary.Read(r, binary.BigEndian, &header.ContentSize)
 	fmt.Println("ContentSize", header.ContentSize, data[3:7])
 
 	return 7
