@@ -20,9 +20,9 @@ const (
 
 type PackageID byte
 
-type Package struct {
-	Type     PackageType
-	Encoding EncodingType
-	ID       PackageID
-	Content  interface{}
+type Header struct {
+	Type        PackageType
+	Encoding    EncodingType
+	ID          PackageID
+	ContentSize uint32
 }
