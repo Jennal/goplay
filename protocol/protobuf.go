@@ -13,23 +13,23 @@ type Protobuf struct {
 	HeaderDecoder
 }
 
-func (self Protobuf) Marshal(header *pkg.Header, content interface{}) []byte {
+func (self Protobuf) Marshal(header *pkg.Header, content interface{}) ([]byte, error) {
 	return Marshal(self, header, content)
 }
 
-func (self Protobuf) MarshalContent(obj interface{}) []byte {
+func (self Protobuf) MarshalContent(obj interface{}) ([]byte, error) {
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
-	encoder.Encode(obj)
-	return buffer.Bytes()
+	err := encoder.Encode(obj)
+	return buffer.Bytes(), err
 }
 
-func (self Protobuf) Unmarshal(data []byte, header *pkg.Header, content interface{}) {
-	Unmarshal(self, data, header, content)
+func (self Protobuf) Unmarshal(data []byte, header *pkg.Header, content interface{}) error {
+	return Unmarshal(self, data, header, content)
 }
 
-func (self Protobuf) UnmarshalContent(data []byte, content interface{}) {
+func (self Protobuf) UnmarshalContent(data []byte, content interface{}) error {
 	buffer := bytes.NewBuffer(data)
 	decoder := gob.NewDecoder(buffer)
-	decoder.Decode(content)
+	return decoder.Decode(content)
 }

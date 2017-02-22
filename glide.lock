@@ -1,6 +1,10 @@
-hash: b02961595ede879b5ade2cb624099481ab6d31e5884a75aa45e6170b16317d12
-updated: 2017-02-21T18:46:06.6775118+08:00
+hash: 825796a77b6fefc539a12de401464e913e5250538d592045d342b749df7a312f
+updated: 2017-02-22T12:40:15.5769549+08:00
 imports:
 - name: github.com/golang/protobuf
   version: 69b215d01a5606c843240eab4937eab3acee6530
+- name: github.com/stretchr/testify
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  subpackages:
+  - assert
 testImports: []
