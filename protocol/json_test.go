@@ -5,8 +5,8 @@ import "github.com/jennal/goplay/handler/pkg"
 import "fmt"
 
 func TestJsonDecode(t *testing.T) {
-	encoder := JsonEncoder{}
-	decoder := JsonDecoder{}
+	encoder := Json{}
+	decoder := Json{}
 
 	content := []int{1, 2, 3}
 	pack := pkg.Header{
@@ -47,8 +47,8 @@ func TestJsonDecode(t *testing.T) {
 }
 
 func BenchmarkJsonDecode(b *testing.B) {
-	encoder := JsonEncoder{}
-	decoder := JsonDecoder{}
+	encoder := Json{}
+	decoder := Json{}
 	pack := pkg.Header{
 		Type:     pkg.PKG_NOTIFY,
 		Encoding: pkg.ENCODING_JSON,

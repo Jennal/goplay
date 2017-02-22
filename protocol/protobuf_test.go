@@ -5,8 +5,8 @@ import "github.com/jennal/goplay/handler/pkg"
 import "fmt"
 
 func TestProtobufDecode(t *testing.T) {
-	encoder := ProtobufEncoder{}
-	decoder := ProtobufDecoder{}
+	encoder := Protobuf{}
+	decoder := Protobuf{}
 
 	content := []int{1, 2, 3}
 	pack := pkg.Header{
@@ -47,8 +47,8 @@ func TestProtobufDecode(t *testing.T) {
 }
 
 func BenchmarkProtobufDecode(b *testing.B) {
-	encoder := ProtobufEncoder{}
-	decoder := ProtobufDecoder{}
+	encoder := Protobuf{}
+	decoder := Protobuf{}
 	pack := pkg.Header{
 		Type:     pkg.PKG_NOTIFY,
 		Encoding: pkg.ENCODING_PROTOBUF,

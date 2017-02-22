@@ -5,8 +5,8 @@ import "github.com/jennal/goplay/handler/pkg"
 import "fmt"
 
 func TestGobDecode(t *testing.T) {
-	encoder := GobEncoder{}
-	decoder := GobDecoder{}
+	encoder := Gob{}
+	decoder := Gob{}
 
 	content := []int{1, 2, 3}
 	pack := pkg.Header{
@@ -47,8 +47,8 @@ func TestGobDecode(t *testing.T) {
 }
 
 func BenchmarkGobDecode(b *testing.B) {
-	encoder := GobEncoder{}
-	decoder := GobDecoder{}
+	encoder := Gob{}
+	decoder := Gob{}
 	pack := pkg.Header{
 		Type:     pkg.PKG_NOTIFY,
 		Encoding: pkg.ENCODING_GOB,
