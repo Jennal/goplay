@@ -12,10 +12,10 @@ const (
 type EncodingType byte
 
 const (
-	ENCODING_PROTOBUF EncodingType = iota
-	ENCODING_GOB
+	ENCODING_GOB EncodingType = iota
 	ENCODING_JSON
 	ENCODING_BSON
+	ENCODING_PROTOBUF
 )
 
 type PackageID byte
