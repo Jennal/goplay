@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 
+	"reflect"
+
 	"github.com/jennal/goplay/handler/pkg"
-	"github.com/jennal/goplay/protocol"
+	"github.com/jennal/goplay/transfer"
 )
 
 func init() {
@@ -15,49 +17,60 @@ func init() {
 	fmt.Println("init-2")
 }
 
-func main() {
-	// var i int32 = 1
-	// buffer := new(bytes.Buffer)
-	// binary.Write(buffer, binary.LittleEndian, i)
-	// fmt.Println(buffer.Bytes())
+type ServerHandler struct {
+}
 
-	// buf := new(bytes.Buffer)
-	// var num uint16 = 1234
-	// err := binary.Write(buf, binary.LittleEndian, num)
-	// if err != nil {
-	// 	fmt.Println("binary.Write failed:", err)
-	// }
-	// fmt.Printf("% x", buf.Bytes())
-
-	// buffer := []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09}
-
-	// fmt.Println("Hello", buffer[:2], buffer[1:9], buffer[2:])
-	// buffer = append(buffer[:2], buffer[3:]...)
-	// fmt.Println(buffer)
-
-	// var buf bytes.Buffer
-	// encoder := gob.NewEncoder(&buf)
-	// encoder.Encode(buffer)
-	// var newBuffer []byte
-	// decoder := gob.NewDecoder(&buf)
-	// decoder.Decode(&newBuffer)
-	// fmt.Println("newBuffer", newBuffer)
-
-	encoder := protocol.GobEncoder{}
-	decoder := protocol.GobDecoder{}
-
-	content := []int{1, 2, 3}
-	pack := pkg.Header{
-		Type:     pkg.PKG_NOTIFY,
-		Encoding: pkg.ENCODING_GOB,
-		ID:       2,
+func (self *ServerHandler) OnStarted() {
+	fmt.Printf("OnStarted %p\n", self)
+}
+func (self *ServerHandler) OnError(err error) {
+	fmt.Println("OnError", err)
+}
+func (self *ServerHandler) OnStopped() {
+	fmt.Println("OnStopped")
+}
+func (self *ServerHandler) OnNewClient(client transfer.Client) {
+	fmt.Println("OnNewClient", client)
+	for {
+		header := &pkg.Header{}
+		var obj Message
+		err := client.Recv(header, &obj)
+		fmt.Printf("Recv:\n%#v\n%#v\n%v\n", header, obj, err)
 	}
-	buffer := encoder.Marshal(&pack, content)
+}
 
-	newPack := pkg.Header{}
-	var newContent []int
-	decoder.Unmarshal(buffer, &newPack, &newContent)
+func (self *ServerHandler) onNewClient(client transfer.Client) {
+	fmt.Println("OnNewClient", client)
+	for {
+		header := &pkg.Header{}
+		var obj Message
+		err := client.Recv(header, &obj)
+		fmt.Printf("Recv:\n%#v\n%#v\n%v\n", header, obj, err)
+	}
+}
 
-	fmt.Println(pack, newPack)
-	fmt.Println(content, newContent)
+type Message struct {
+	Id  int
+	Ok  bool
+	M   map[string]int
+	Arr []string
+}
+
+func main() {
+	var inst interface{} = &ServerHandler{}
+	val := reflect.TypeOf(inst)
+	fmt.Println("name:", val.String())
+	for i := 0; i < val.NumMethod(); i++ {
+		method := val.Method(i)
+		fmt.Println("method:", method.Name, method.Type.String())
+
+		if method.Name == "OnStarted" {
+			fmt.Printf("%p\n", inst)
+			method.Func.Call([]reflect.Value{
+				reflect.ValueOf(inst),
+			})
+		}
+	}
+
+	// fmt.Scanf("%s", nil)
 }
