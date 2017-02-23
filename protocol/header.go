@@ -2,11 +2,11 @@ package protocol
 
 import (
 	"bytes"
-	"encoding/binary"
 
 	"errors"
 
 	"github.com/jennal/goplay/handler/pkg"
+	"github.com/jennal/goplay/helpers"
 )
 
 const HEADER_SIZE = 7
@@ -22,7 +22,8 @@ func (self HeaderEncoder) MarshalHeader(header *pkg.Header) ([]byte, error) {
 		byte(header.Encoding),
 		byte(header.ID),
 	})
-	err := binary.Write(&buffer, binary.BigEndian, header.ContentSize)
+	buf, err := helpers.UInt32(header.ContentSize).GetBytes()
+	buffer.Write(buf)
 
 	return buffer.Bytes(), err
 }
@@ -44,10 +45,8 @@ func (self HeaderDecoder) UnmarshalHeader(data []byte, header *pkg.Header) (int,
 	b, _ = buffer.ReadByte()
 	header.ID = pkg.PackageID(b)
 
-	// fmt.Println("ContentSize", header.ContentSize, data)
-	r := bytes.NewReader(data[3:7])
-	err := binary.Read(r, binary.BigEndian, &header.ContentSize)
-	// fmt.Println("ContentSize", header.ContentSize, data[3:7])
+	var err error
+	header.ContentSize, err = helpers.Bytes(data[3:7]).ToInt()
 
 	return 7, err
 }

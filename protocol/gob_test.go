@@ -35,6 +35,36 @@ func TestGobDecode(t *testing.T) {
 	assert.Equal(t, content[0], newContent[0], "package.Content[0] are not equal %v != %v", content[0], newContent[0])
 }
 
+type message struct {
+	ID  int
+	Ok  bool
+	M   map[string]int
+	Arr []string
+}
+
+func TestGobMarshalContent(t *testing.T) {
+	encode := GetEncodeDecoder(pkg.ENCODING_GOB)
+	input := message{
+		ID: 20,
+		Ok: true,
+		M: map[string]int{
+			"haha": 100,
+			"hoho": 200,
+		},
+		Arr: []string{
+			"1",
+			"2",
+		},
+	}
+	buf, err := encode.MarshalContent(input)
+	assert.Nil(t, err, "encode.MarshalContent error")
+	fmt.Println(string(buf))
+
+	var output message
+	encode.UnmarshalContent(buf, &output)
+	assert.Equal(t, input, output, "Unmarshaled Content not equals to the origin one, %#v != %#v", input, output)
+}
+
 func BenchmarkGobDecode(b *testing.B) {
 	encoder := Gob{}
 	decoder := Gob{}

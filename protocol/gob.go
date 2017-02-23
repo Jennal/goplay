@@ -13,7 +13,7 @@ type Gob struct {
 }
 
 func (self Gob) Marshal(header *pkg.Header, content interface{}) ([]byte, error) {
-	return Marshal(self, header, content)
+	return marshal(self, header, content)
 }
 
 func (self Gob) MarshalContent(obj interface{}) ([]byte, error) {
@@ -24,7 +24,7 @@ func (self Gob) MarshalContent(obj interface{}) ([]byte, error) {
 }
 
 func (self Gob) Unmarshal(data []byte, header *pkg.Header, content interface{}) error {
-	return Unmarshal(self, data, header, content)
+	return unmarshal(self, data, header, content)
 }
 
 func (self Gob) UnmarshalContent(data []byte, content interface{}) error {

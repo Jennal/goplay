@@ -12,7 +12,7 @@ type Json struct {
 }
 
 func (self Json) Marshal(header *pkg.Header, content interface{}) ([]byte, error) {
-	return Marshal(self, header, content)
+	return marshal(self, header, content)
 }
 
 func (self Json) MarshalContent(obj interface{}) ([]byte, error) {
@@ -20,7 +20,7 @@ func (self Json) MarshalContent(obj interface{}) ([]byte, error) {
 }
 
 func (self Json) Unmarshal(data []byte, header *pkg.Header, content interface{}) error {
-	return Unmarshal(self, data, header, content)
+	return unmarshal(self, data, header, content)
 }
 
 func (self Json) UnmarshalContent(data []byte, content interface{}) error {
