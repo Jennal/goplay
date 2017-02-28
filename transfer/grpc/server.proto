@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package grpc;
+
+message Package {
+    int32 Type = 1;
+    int32 Encoding = 2;
+    int32 ID = 3;
+    bytes Content = 4;
+}
+
+service Grpc {
+    rpc Stream(stream Package) returns (stream Package) {}
+}

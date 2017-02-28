@@ -5,10 +5,7 @@ import (
 	"github.com/jennal/goplay/transfer"
 )
 
-type Service interface {
-}
-
-type service struct {
+type Service struct {
 	server transfer.Server
 	router router.Router
 }
