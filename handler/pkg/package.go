@@ -29,3 +29,11 @@ type Header struct {
 	ID          PackageIDType
 	ContentSize PackageSizeType
 }
+
+func NewHeader(t PackageType, e EncodingType) *Header {
+	return &Header{
+		Type:     t,
+		Encoding: e,
+		ID:       NextID(),
+	}
+}

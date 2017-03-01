@@ -35,7 +35,7 @@ func (self *ServerHandler) OnNewClient(client transfer.Client) {
 		header := &pkg.Header{}
 		var obj Message
 		err := client.Recv(header, &obj)
-		fmt.Printf("Recv:\n%#v\n%#v\n%v\n", header, obj, err)
+		fmt.Printf("Recv:\nheader => %#v\nmessage => %#v\nerr => %v\n", header, obj, err)
 	}
 }
 
@@ -45,5 +45,23 @@ func TestTcp(t *testing.T) {
 
 	cli := NewClient()
 	cli.Connect("", 8888)
+
+	header := pkg.NewHeader(
+		pkg.PKG_HEARTBEAT,
+		pkg.ENCODING_JSON,
+	)
+	t.Log(header)
+	cli.Send(header, Message{
+		Id: 1,
+		Ok: true,
+		M: map[string]int{
+			"hello": 0,
+			"world": 1,
+		},
+		Arr: []string{
+			"from",
+			"client",
+		},
+	})
 	time.Sleep(time.Second)
 }
