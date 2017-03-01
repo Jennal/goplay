@@ -68,9 +68,9 @@ func (client *client) Send(header *pkg.Header, data interface{}) error {
 		return err
 	}
 
-	size := len(buffer)
+	var size pkg.PackageSizeType = pkg.PackageSizeType(len(buffer))
 	fmt.Println("Send size:", size)
-	sizeBuf, err := helpers.UInt32(size).GetBytes()
+	sizeBuf, err := helpers.GetBytes(size)
 	if err != nil {
 		return err
 	}
@@ -84,13 +84,13 @@ func (client *client) Send(header *pkg.Header, data interface{}) error {
 }
 
 func (client *client) Recv(header *pkg.Header, data interface{}) error {
-	var buffer = make([]byte, 4)
+	var buffer = make([]byte, 2)
 	_, err := client.Read(buffer)
 	if err != nil {
 		return err
 	}
 
-	size, err := helpers.Bytes(buffer).ToInt()
+	size, err := helpers.ToUInt16(buffer)
 	fmt.Println("Recv size:", size)
 	if err != nil {
 		return err

@@ -8,8 +8,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/jennal/goplay/handler/pkg"
-	"github.com/jennal/goplay/helpers"
-	"github.com/jennal/goplay/protocol"
 	"github.com/jennal/goplay/transfer"
 )
 
@@ -85,52 +83,54 @@ func (client *client) Write(buf []byte) (int, error) {
 }
 
 func (client *client) Send(header *pkg.Header, data interface{}) error {
-	encoder := protocol.GetEncodeDecoder(header.Encoding)
-	buffer, err := encoder.Marshal(header, data)
-	if err != nil {
-		return err
-	}
+	// encoder := protocol.GetEncodeDecoder(header.Encoding)
+	// buffer, err := encoder.Marshal(header, data)
+	// if err != nil {
+	// 	return err
+	// }
 
-	size := len(buffer)
-	fmt.Println("Send size:", size)
-	sizeBuf, err := helpers.UInt32(size).GetBytes()
-	if err != nil {
-		return err
-	}
-	_, err = client.Write(sizeBuf)
-	if err != nil {
-		return err
-	}
+	// var size = len(buffer)
+	// fmt.Println("Send size:", size)
+	// sizeBuf, err := helpers.UInt32(size).GetBytes()
+	// if err != nil {
+	// 	return err
+	// }
+	// _, err = client.Write(sizeBuf)
+	// if err != nil {
+	// 	return err
+	// }
 
-	_, err = client.Write(buffer)
-	return err
+	// _, err = client.Write(buffer)
+	// return err
+	return nil
 }
 
 func (client *client) Recv(header *pkg.Header, data interface{}) error {
-	var buffer = make([]byte, 4)
-	_, err := client.Read(buffer)
-	if err != nil {
-		return err
-	}
+	// var buffer = make([]byte, 4)
+	// _, err := client.Read(buffer)
+	// if err != nil {
+	// 	return err
+	// }
 
-	size, err := helpers.Bytes(buffer).ToInt()
-	fmt.Println("Recv size:", size)
-	if err != nil {
-		return err
-	}
+	// size, err := helpers.Bytes(buffer).ToInt()
+	// fmt.Println("Recv size:", size)
+	// if err != nil {
+	// 	return err
+	// }
 
-	buffer = make([]byte, size)
-	_, err = client.Read(buffer)
-	if err != nil {
-		return err
-	}
+	// buffer = make([]byte, size)
+	// _, err = client.Read(buffer)
+	// if err != nil {
+	// 	return err
+	// }
 
-	h, n, err := protocol.UnMarshalHeader(buffer)
-	if err != nil {
-		return err
-	}
+	// h, n, err := protocol.UnMarshalHeader(buffer)
+	// if err != nil {
+	// 	return err
+	// }
 
-	*header = *h
-	decoder := protocol.GetEncodeDecoder(header.Encoding)
-	return decoder.UnmarshalContent(buffer[n:], data)
+	// *header = *h
+	// decoder := protocol.GetEncodeDecoder(header.Encoding)
+	// return decoder.UnmarshalContent(buffer[n:], data)
+	return nil
 }
