@@ -30,7 +30,7 @@ func marshal(self Encoder, header *pkg.Header, content interface{}) ([]byte, err
 		return nil, err
 	}
 
-	header.ContentSize = uint32(len(contentBuff))
+	header.ContentSize = pkg.PackageSizeType(len(contentBuff))
 	headerBuff, err := self.MarshalHeader(header)
 	if err != nil {
 		return nil, err

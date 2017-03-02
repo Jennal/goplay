@@ -22,7 +22,7 @@ func (self HeaderEncoder) MarshalHeader(header *pkg.Header) ([]byte, error) {
 		byte(header.Encoding),
 		byte(header.ID),
 	})
-	buf, err := helpers.UInt32(header.ContentSize).GetBytes()
+	buf, err := helpers.GetBytes(header.ContentSize)
 	buffer.Write(buf)
 
 	return buffer.Bytes(), err
@@ -38,15 +38,15 @@ func (self HeaderDecoder) UnmarshalHeader(data []byte, header *pkg.Header) (int,
 
 	buffer := bytes.NewBuffer(data)
 
-	b, _ := buffer.ReadByte()
+	b, err := buffer.ReadByte()
 	header.Type = pkg.PackageType(b)
-	b, _ = buffer.ReadByte()
+	b, err = buffer.ReadByte()
 	header.Encoding = pkg.EncodingType(b)
-	b, _ = buffer.ReadByte()
-	header.ID = pkg.PackageID(b)
+	b, err = buffer.ReadByte()
+	header.ID = pkg.PackageIDType(b)
 
-	var err error
-	header.ContentSize, err = helpers.Bytes(data[3:7]).ToInt()
+	size, err := helpers.ToUInt16(data[3:5])
+	header.ContentSize = pkg.PackageSizeType(size)
 
-	return 7, err
+	return 5, err
 }

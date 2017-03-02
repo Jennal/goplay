@@ -7,6 +7,8 @@ const (
 	PKG_NOTIFY_RESPONSE
 	PKG_REQUEST
 	PKG_RESPONSE
+	PKG_HEARTBEAT
+	PKG_HEARTBEAT_RESPONSE
 )
 
 type EncodingType byte
@@ -18,11 +20,20 @@ const (
 	ENCODING_PROTOBUF
 )
 
-type PackageID byte
+type PackageIDType byte
+type PackageSizeType uint16
 
 type Header struct {
 	Type        PackageType
 	Encoding    EncodingType
-	ID          PackageID
-	ContentSize uint32
+	ID          PackageIDType
+	ContentSize PackageSizeType
+}
+
+func NewHeader(t PackageType, e EncodingType) *Header {
+	return &Header{
+		Type:     t,
+		Encoding: e,
+		ID:       NextID(),
+	}
 }
