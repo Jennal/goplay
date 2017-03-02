@@ -6,7 +6,6 @@ import (
 	"net"
 
 	"github.com/jennal/goplay/handler/pkg"
-	"github.com/jennal/goplay/helpers"
 	"github.com/jennal/goplay/protocol"
 	"github.com/jennal/goplay/transfer"
 )
@@ -68,46 +67,33 @@ func (client *client) Send(header *pkg.Header, data interface{}) error {
 		return err
 	}
 
-	var size pkg.PackageSizeType = pkg.PackageSizeType(len(buffer))
-	fmt.Println("Send size:", size)
-	sizeBuf, err := helpers.GetBytes(size)
-	if err != nil {
-		return err
-	}
-	_, err = client.Write(sizeBuf)
-	if err != nil {
-		return err
-	}
+	fmt.Println("Write:", header, data, buffer)
 
 	_, err = client.Write(buffer)
 	return err
 }
 
 func (client *client) Recv(header *pkg.Header, data interface{}) error {
-	var buffer = make([]byte, 2)
+	var buffer = make([]byte, protocol.HEADER_SIZE)
 	_, err := client.Read(buffer)
 	if err != nil {
 		return err
 	}
+	fmt.Println("Header:", err, buffer)
 
-	size, err := helpers.ToUInt16(buffer)
-	fmt.Println("Recv size:", size)
+	h, _, err := protocol.UnMarshalHeader(buffer)
+	fmt.Println(h)
 	if err != nil {
 		return err
 	}
+	*header = *h
 
-	buffer = make([]byte, size)
+	decoder := protocol.GetEncodeDecoder(header.Encoding)
+	buffer = make([]byte, header.ContentSize)
 	_, err = client.Read(buffer)
 	if err != nil {
 		return err
 	}
 
-	h, n, err := protocol.UnMarshalHeader(buffer)
-	if err != nil {
-		return err
-	}
-
-	*header = *h
-	decoder := protocol.GetEncodeDecoder(header.Encoding)
-	return decoder.UnmarshalContent(buffer[n:], data)
+	return decoder.UnmarshalContent(buffer, data)
 }

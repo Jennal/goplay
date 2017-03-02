@@ -9,7 +9,7 @@ import (
 	"github.com/jennal/goplay/helpers"
 )
 
-const HEADER_SIZE = 7
+const HEADER_SIZE = 5
 
 type HeaderEncoder struct {
 }
@@ -45,8 +45,8 @@ func (self HeaderDecoder) UnmarshalHeader(data []byte, header *pkg.Header) (int,
 	b, err = buffer.ReadByte()
 	header.ID = pkg.PackageIDType(b)
 
-	size, err := helpers.ToUInt16(data[3:5])
+	size, err := helpers.ToUInt16(data[3:HEADER_SIZE])
 	header.ContentSize = pkg.PackageSizeType(size)
 
-	return 5, err
+	return HEADER_SIZE, err
 }
