@@ -49,6 +49,7 @@ func TestTcp(t *testing.T) {
 	header := pkg.NewHeader(
 		pkg.PKG_HEARTBEAT,
 		pkg.ENCODING_JSON,
+		"test.hello.world",
 	)
 	t.Log(header)
 	cli.Send(header, Message{

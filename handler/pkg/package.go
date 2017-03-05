@@ -28,12 +28,15 @@ type Header struct {
 	Encoding    EncodingType
 	ID          PackageIDType
 	ContentSize PackageSizeType
+	Route       string
 }
 
-func NewHeader(t PackageType, e EncodingType) *Header {
+func NewHeader(t PackageType, e EncodingType, r string) *Header {
 	return &Header{
-		Type:     t,
-		Encoding: e,
-		ID:       NextID(),
+		Type:        t,
+		Encoding:    e,
+		ID:          NextID(),
+		ContentSize: 0,
+		Route:       r,
 	}
 }

@@ -20,7 +20,7 @@ func GetEncodeDecoder(encoding pkg.EncodingType) EncodeDecoder {
 
 func UnMarshalHeader(data []byte) (*pkg.Header, int, error) {
 	header := &pkg.Header{}
-	n, err := headerDecoder.UnmarshalHeader(data[:HEADER_SIZE], header)
+	n, err := headerDecoder.UnmarshalHeader(data[:HEADER_STATIC_SIZE], header)
 	return header, n, err
 }
 

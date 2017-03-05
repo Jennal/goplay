@@ -74,7 +74,7 @@ func (client *client) Send(header *pkg.Header, data interface{}) error {
 }
 
 func (client *client) Recv(header *pkg.Header, data interface{}) error {
-	var buffer = make([]byte, protocol.HEADER_SIZE)
+	var buffer = make([]byte, protocol.HEADER_STATIC_SIZE)
 	_, err := client.Read(buffer)
 	if err != nil {
 		return err
