@@ -36,6 +36,9 @@ func (self *ServerHandler) OnNewClient(client transfer.Client) {
 		var obj Message
 		err := client.Recv(header, &obj)
 		fmt.Printf("Recv:\nheader => %#v\nmessage => %#v\nerr => %v\n", header, obj, err)
+		if err != nil {
+			break
+		}
 	}
 }
 

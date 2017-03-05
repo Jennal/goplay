@@ -69,7 +69,9 @@ func (client *client) Send(header *pkg.Header, data interface{}) error {
 
 	fmt.Println("Write:", header, data, buffer)
 
+	// fmt.Println("write-0")
 	_, err = client.Write(buffer)
+	// fmt.Println("write-1")
 	return err
 }
 
@@ -80,6 +82,23 @@ func (client *client) Recv(header *pkg.Header, data interface{}) error {
 		return err
 	}
 	fmt.Println("Header:", err, buffer)
+
+	routeBuf := make([]byte, 1)
+	_, err = client.Read(routeBuf)
+	if err != nil {
+		return err
+	}
+	buffer = append(buffer, routeBuf...)
+	/* heartbeat/heartbeat_response has no route */
+	if routeBuf[0] > 0 {
+		routeBuf = make([]byte, routeBuf[0])
+		_, err = client.Read(routeBuf)
+		if err != nil {
+			return err
+		}
+
+		buffer = append(buffer, routeBuf...)
+	}
 
 	h, _, err := protocol.UnMarshalHeader(buffer)
 	fmt.Println(h)
