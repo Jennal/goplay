@@ -10,6 +10,10 @@ import (
 	"github.com/jennal/goplay/transfer"
 )
 
+var (
+	ERR_ALREADY_CONNECTED = errors.New("already connected")
+)
+
 type client struct {
 	conn        net.Conn
 	isConnected bool
@@ -34,7 +38,7 @@ func (client *client) IsConnected() bool {
 
 func (client *client) Connect(host string, port int) error {
 	if client.isConnected {
-		return errors.New("already connected")
+		return ERR_ALREADY_CONNECTED
 	}
 
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", host, port))
