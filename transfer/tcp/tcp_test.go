@@ -31,7 +31,7 @@ func (self *ServerHandler) OnError(err error) {
 func (self *ServerHandler) OnStopped() {
 	fmt.Println("OnStopped")
 }
-func (self *ServerHandler) OnNewClient(client transfer.Client) {
+func (self *ServerHandler) OnNewClient(client transfer.IClient) {
 	fmt.Println("OnNewClient", client)
 	for {
 		header, bodyBuf, err := client.Recv()
@@ -48,7 +48,7 @@ func (self *ServerHandler) OnNewClient(client transfer.Client) {
 
 func TestTcp(t *testing.T) {
 	serv := NewServer("", 8888)
-	serv.SetupHandler(&ServerHandler{})
+	serv.RegistHandler(&ServerHandler{})
 	go serv.Start()
 
 	cli := NewClient()

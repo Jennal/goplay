@@ -11,6 +11,11 @@ import (
 
 const HEADER_STATIC_SIZE = 5
 
+var (
+	HeartBeatHeader         = NewHeader(PKG_HEARTBEAT, ENCODING_NONE, "")
+	HeartBeatResponseHeader = NewHeader(PKG_HEARTBEAT_RESPONSE, ENCODING_NONE, "")
+)
+
 type Header struct {
 	Type        PackageType
 	Encoding    EncodingType

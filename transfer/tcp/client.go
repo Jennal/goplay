@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/jennal/goplay/event"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/transfer"
 )
@@ -14,19 +15,22 @@ var (
 )
 
 type client struct {
+	*event.Event
 	conn        net.Conn
 	isConnected bool
 }
 
-func NewClientWithConnect(conn net.Conn) transfer.Client {
+func NewClientWithConnect(conn net.Conn) transfer.IClient {
 	return &client{
+		Event:       event.NewEvent(),
 		conn:        conn,
 		isConnected: true,
 	}
 }
 
-func NewClient() transfer.Client {
+func NewClient() transfer.IClient {
 	return &client{
+		Event:       event.NewEvent(),
 		isConnected: false,
 	}
 }
@@ -52,6 +56,7 @@ func (client *client) Connect(host string, port int) error {
 }
 
 func (client *client) Disconnect() error {
+	defer client.Emit(transfer.EVENT_CLIENT_DISCONNECTED, client)
 	return client.conn.Close()
 }
 

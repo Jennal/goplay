@@ -19,7 +19,8 @@ const (
 type EncodingType byte
 
 const (
-	ENCODING_GOB EncodingType = iota
+	ENCODING_NONE EncodingType = iota
+	ENCODING_GOB
 	ENCODING_JSON
 	ENCODING_BSON
 	ENCODING_PROTOBUF

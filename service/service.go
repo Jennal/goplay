@@ -8,15 +8,15 @@ import (
 )
 
 type Service struct {
-	server transfer.Server
+	server transfer.IServer
 	router router.Router
 }
 
-func NewService(serv transfer.Server) *Service {
+func NewService(serv transfer.IServer) *Service {
 	instance := &Service{
 		server: serv,
 	}
-	serv.SetupHandler(instance)
+	serv.RegistHandler(instance)
 	return instance
 }
 
@@ -29,26 +29,28 @@ func (self *Service) OnError(err error) {
 func (self *Service) OnStopped() {
 	fmt.Println("OnStopped")
 }
-func (self *Service) OnNewClient(client transfer.Client) {
+func (self *Service) OnNewClient(client transfer.IClient) {
 	fmt.Println("OnNewClient", client)
-	for {
-		header, bodyBuf, err := client.Recv()
-		fmt.Printf("Recv:\n\theader => %#v\n\terr => %v\n", header, err)
-		if err != nil {
-			break
-		}
+	go func() {
+		for {
+			header, bodyBuf, err := client.Recv()
+			fmt.Printf("Recv:\n\theader => %#v\n\terr => %v\n", header, err)
+			if err != nil {
+				break
+			}
 
-		fmt.Printf("Recv:\n\tbody => %#v\nerr => %v\n", bodyBuf, err)
-		if err != nil {
-			break
-		}
+			fmt.Printf("Recv:\n\tbody => %#v\nerr => %v\n", bodyBuf, err)
+			if err != nil {
+				break
+			}
 
-		/*
-		 * 1. find route func
-		 * 2. unmarshal data
-		 * 3. call route func
-		 */
-		//TODO:
-		// method := self.router.Get(header.Route)
-	}
+			/*
+			 * 1. find route func
+			 * 2. unmarshal data
+			 * 3. call route func
+			 */
+			//TODO:
+			// method := self.router.Get(header.Route)
+		}
+	}()
 }

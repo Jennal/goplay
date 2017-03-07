@@ -51,7 +51,7 @@ func (self *ServerHandler) OnError(err error) {
 func (self *ServerHandler) OnStopped() {
 	fmt.Println("OnStopped")
 }
-func (self *ServerHandler) OnNewClient(client transfer.Client) {
+func (self *ServerHandler) OnNewClient(client transfer.IClient) {
 	fmt.Println("OnNewClient", client)
 	for {
 		header, body, err := client.Recv()

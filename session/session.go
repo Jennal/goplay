@@ -1,14 +1,20 @@
 package session
 
+import (
+	"github.com/jennal/goplay/transfer"
+)
+
 type Session struct {
-	ID   int
-	data map[string]interface{}
+	client transfer.IClient
+	ID     int
+	data   map[string]interface{}
 }
 
-func NewSession(id int) *Session {
+func NewSession(cli transfer.IClient) *Session {
 	return &Session{
-		ID:   id,
-		data: make(map[string]interface{}),
+		client: cli,
+		ID:     0,
+		data:   make(map[string]interface{}),
 	}
 }
 

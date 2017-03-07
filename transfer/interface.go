@@ -1,10 +1,13 @@
 package transfer
 
 import (
+	"github.com/jennal/goplay/event"
 	"github.com/jennal/goplay/pkg"
 )
 
-type Client interface {
+type IClient interface {
+	event.IEvent
+
 	IsConnected() bool
 	Connect(host string, port int) error
 	Disconnect() error
@@ -15,17 +18,21 @@ type Client interface {
 	Recv() (*pkg.Header, []byte, error)
 }
 
-type Server interface {
-	SetupHandler(handler ServerHandler)
-	GetClients() []Client
+type IServer interface {
+	event.IEvent
+
+	RegistHandler(handler IServerHandler)
+	UnregistHandler(handler IServerHandler)
+
+	GetClients() []IClient
 	Start() error
 	Stop() error
 }
 
-type ServerHandler interface {
+type IServerHandler interface {
 	OnStarted()
 	OnError(err error)
 	OnStopped()
 
-	OnNewClient(client Client)
+	OnNewClient(client IClient)
 }
