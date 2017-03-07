@@ -2,6 +2,7 @@ package router
 
 import "testing"
 import "fmt"
+import "reflect"
 
 func TestRouter(t *testing.T) {
 	r := NewRouter("gate")
@@ -26,4 +27,6 @@ func TestMethod(t *testing.T) {
 	m := r.Get("test.test.add")
 	result := m.Call(1, float32(2.0))
 	t.Log(result...)
+	arg := m.NewArg(0)
+	t.Log(arg, reflect.TypeOf(arg))
 }

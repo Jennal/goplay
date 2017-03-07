@@ -5,17 +5,22 @@ import (
 )
 
 type Session struct {
-	client transfer.IClient
-	ID     int
-	data   map[string]interface{}
+	transfer.IClient
+
+	ID   int
+	data map[string]interface{}
 }
 
 func NewSession(cli transfer.IClient) *Session {
 	return &Session{
-		client: cli,
-		ID:     0,
-		data:   make(map[string]interface{}),
+		IClient: cli,
+		ID:      0,
+		data:    make(map[string]interface{}),
 	}
+}
+
+func (s *Session) Bind(id int) {
+	s.ID = id
 }
 
 func (s *Session) Remove(key string) {
