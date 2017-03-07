@@ -29,6 +29,7 @@ func (r *Router) Add(obj interface{}) {
 		path := r.getPath(tp, method)
 		if _, ok := r.data[path]; ok {
 			//TODO:Error
+			fmt.Println("Router.Add: error: path already exists!", path)
 			continue
 		}
 

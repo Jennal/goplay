@@ -6,8 +6,10 @@ import (
 
 	"time"
 
-	"github.com/jennal/goplay/handler/pkg"
+	"github.com/jennal/goplay/encode"
+	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/transfer"
+	"github.com/stretchr/testify/assert"
 )
 
 type Message struct {
@@ -32,10 +34,12 @@ func (self *ServerHandler) OnStopped() {
 func (self *ServerHandler) OnNewClient(client transfer.Client) {
 	fmt.Println("OnNewClient", client)
 	for {
-		header := &pkg.Header{}
+		header, bodyBuf, err := client.Recv()
+		fmt.Println("Recv Error: ", err)
 		var obj Message
-		err := client.Recv(header, &obj)
-		fmt.Printf("Recv:\nheader => %#v\nmessage => %#v\nerr => %v\n", header, obj, err)
+		err = encode.GetEncodeDecoder(pkg.ENCODING_JSON).Unmarshal(bodyBuf, &obj)
+		fmt.Println("Recv Error: ", err)
+		fmt.Printf("Recv:\nheader => %#v\nbodyBuf => %v\nmessage => %#v\n", header, bodyBuf, obj)
 		if err != nil {
 			break
 		}
@@ -43,7 +47,8 @@ func (self *ServerHandler) OnNewClient(client transfer.Client) {
 }
 
 func TestTcp(t *testing.T) {
-	serv := NewServer("", 8888, &ServerHandler{})
+	serv := NewServer("", 8888)
+	serv.SetupHandler(&ServerHandler{})
 	go serv.Start()
 
 	cli := NewClient()
@@ -55,7 +60,7 @@ func TestTcp(t *testing.T) {
 		"test.hello.world",
 	)
 	t.Log(header)
-	cli.Send(header, Message{
+	obj := Message{
 		Id: 1,
 		Ok: true,
 		M: map[string]int{
@@ -66,6 +71,9 @@ func TestTcp(t *testing.T) {
 			"from",
 			"client",
 		},
-	})
+	}
+	buf, err := encode.GetEncodeDecoder(pkg.ENCODING_JSON).Marshal(obj)
+	assert.Nil(t, err, "Encode Error: %v", err)
+	cli.Send(header, buf)
 	time.Sleep(time.Second)
 }

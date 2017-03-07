@@ -1,7 +1,7 @@
 package transfer
 
 import (
-	"github.com/jennal/goplay/handler/pkg"
+	"github.com/jennal/goplay/pkg"
 )
 
 type Client interface {
@@ -11,11 +11,12 @@ type Client interface {
 	Read(buf []byte) (int, error)
 	Write(buf []byte) (int, error)
 
-	Send(*pkg.Header, interface{}) error
-	Recv(*pkg.Header, interface{}) error
+	Send(*pkg.Header, []byte) error
+	Recv() (*pkg.Header, []byte, error)
 }
 
 type Server interface {
+	SetupHandler(handler ServerHandler)
 	GetClients() []Client
 	Start() error
 	Stop() error

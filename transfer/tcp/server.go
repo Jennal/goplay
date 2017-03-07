@@ -16,13 +16,16 @@ type server struct {
 	listener net.Listener
 }
 
-func NewServer(host string, port int, delegate transfer.ServerHandler) transfer.Server {
+func NewServer(host string, port int) transfer.Server {
 	return &server{
-		host:     host,
-		port:     port,
-		clients:  []transfer.Client{},
-		delegate: delegate,
+		host:    host,
+		port:    port,
+		clients: []transfer.Client{},
 	}
+}
+
+func (serv *server) SetupHandler(handler transfer.ServerHandler) {
+	serv.delegate = handler
 }
 
 func (serv *server) GetClients() []transfer.Client {

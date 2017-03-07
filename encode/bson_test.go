@@ -1,10 +1,10 @@
-package protocol
+package encode
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/jennal/goplay/handler/pkg"
+	"github.com/jennal/goplay/pkg"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,7 +36,7 @@ import (
 // 	assert.Equal(t, content[0], newContent[0], "package.Content[0] are not equal %v != %v", content[0], newContent[0])
 // }
 
-func TestBsonMarshalContent(t *testing.T) {
+func TestBsonMarshal(t *testing.T) {
 	encode := GetEncodeDecoder(pkg.ENCODING_BSON)
 	input := message{
 		ID: 20,
@@ -50,31 +50,25 @@ func TestBsonMarshalContent(t *testing.T) {
 			"2",
 		},
 	}
-	buf, err := encode.MarshalContent(input)
-	assert.Nil(t, err, "encode.MarshalContent error")
+	buf, err := encode.Marshal(input)
+	assert.Nil(t, err, "encode.Marshal error")
 	fmt.Println(string(buf))
 
 	var output message
-	encode.UnmarshalContent(buf, &output)
+	encode.Unmarshal(buf, &output)
 	assert.Equal(t, input, output, "Unmarshaled Content not equals to the origin one, %#v != %#v", input, output)
 }
 
 func BenchmarkBsonDecode(b *testing.B) {
 	encoder := Bson{}
 	decoder := Bson{}
-	pack := pkg.Header{
-		Type:     pkg.PKG_NOTIFY,
-		Encoding: pkg.ENCODING_BSON,
-		ID:       2,
-	}
 	content := []int{1, 2, 3, 4}
 
-	buffer, err := encoder.Marshal(&pack, content)
+	buffer, err := encoder.Marshal(content)
 	assert.Nil(b, err, "encode.Marshal error")
-	newHeader := pkg.Header{}
 	var newContent []int
 	for i := 0; i < b.N; i++ {
-		err = decoder.Unmarshal(buffer, &newHeader, &newContent)
+		err = decoder.Unmarshal(buffer, &newContent)
 		assert.Nil(b, err, "decoder.Unmarshal error")
 	}
 }

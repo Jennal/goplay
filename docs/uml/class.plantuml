@@ -17,7 +17,7 @@ package transfer {
     }
 }
 
-package protocol {
+package encode {
     interface Encoder {
         + []byte Marshal(interface{});
     }
@@ -30,26 +30,26 @@ package protocol {
     }
 }
 
-package handler/package {
-    enum PackageType extends Byte {
+package pkg {
+    enum PackageType extends uint8 {
         PKG_NOTIFY,
         PKG_NOTIFY_RESPONSE,
         PKG_REQUEST,
         PKG_RESPONSE,
     }
 
-    enum EncodingType extends Byte {
+    enum EncodingType extends uint8 {
         ENCODING_PROTOBUF,
         ENCODING_GOB,
         ENCODING_JSON,
         ENCODING_BSON,
     }
 
-    class Package {
+    class Header {
         PackageType Type;
         EncodingType Encoding;
-        int ID;
-        interface{} Content;
+        uint8 ID;
+        uint16 ContentSize;
     }
 }
 

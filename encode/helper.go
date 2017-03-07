@@ -1,12 +1,10 @@
-package protocol
+package encode
 
 import (
 	"bytes"
 
-	"github.com/jennal/goplay/handler/pkg"
+	"github.com/jennal/goplay/pkg"
 )
-
-var headerDecoder HeaderDecoder
 
 var encoder_map map[pkg.EncodingType]EncodeDecoder = map[pkg.EncodingType]EncodeDecoder{
 	pkg.ENCODING_GOB:  Gob{},
@@ -20,18 +18,19 @@ func GetEncodeDecoder(encoding pkg.EncodingType) EncodeDecoder {
 
 func UnMarshalHeader(data []byte) (*pkg.Header, int, error) {
 	header := &pkg.Header{}
-	n, err := headerDecoder.UnmarshalHeader(data, header)
+	n, err := pkg.UnmarshalHeader(data, header)
 	return header, n, err
 }
 
-func marshal(self Encoder, header *pkg.Header, content interface{}) ([]byte, error) {
-	contentBuff, err := self.MarshalContent(content)
+func Marshal(header *pkg.Header, content interface{}) ([]byte, error) {
+	encoder := GetEncodeDecoder(header.Encoding)
+	contentBuff, err := encoder.Marshal(content)
 	if err != nil {
 		return nil, err
 	}
 
 	header.ContentSize = pkg.PackageSizeType(len(contentBuff))
-	headerBuff, err := self.MarshalHeader(header)
+	headerBuff, err := header.Marshal()
 	if err != nil {
 		return nil, err
 	}
@@ -43,10 +42,12 @@ func marshal(self Encoder, header *pkg.Header, content interface{}) ([]byte, err
 	return buffer.Bytes(), nil
 }
 
-func unmarshal(self Decoder, data []byte, header *pkg.Header, content interface{}) error {
-	n, err := self.UnmarshalHeader(data, header)
+func Unmarshal(data []byte, header *pkg.Header, content interface{}) error {
+	n, err := pkg.UnmarshalHeader(data, header)
 	if err != nil {
 		return err
 	}
-	return self.UnmarshalContent(data[n:], content)
+
+	decoder := GetEncodeDecoder(header.Encoding)
+	return decoder.Unmarshal(data[n:], content)
 }
