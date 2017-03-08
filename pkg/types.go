@@ -1,5 +1,11 @@
 package pkg
 
+type Status int16
+
+const (
+	STAT_OK Status = iota
+)
+
 type PackageType byte
 
 const (

@@ -20,6 +20,9 @@ func init() {
 type ServerHandler struct {
 }
 
+func (self *ServerHandler) NewFunc() {
+}
+
 func (self *ServerHandler) OnStarted() {
 	fmt.Printf("OnStarted %p\n", self)
 
@@ -71,7 +74,7 @@ type Message struct {
 
 func main() {
 	var inst interface{} = &ServerHandler{}
-	val := reflect.TypeOf(inst)
+	val := reflect.TypeOf(inst.(transfer.IServerHandler))
 	fmt.Println("name:", val.String())
 	for i := 0; i < val.NumMethod(); i++ {
 		method := val.Method(i)

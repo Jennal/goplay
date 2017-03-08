@@ -4,6 +4,9 @@ import (
 	"fmt"
 
 	"github.com/jennal/goplay/encode"
+	"github.com/jennal/goplay/filter"
+	"github.com/jennal/goplay/filter/heartbeat"
+	"github.com/jennal/goplay/handler"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/router"
 	"github.com/jennal/goplay/session"
@@ -13,47 +16,79 @@ import (
 type Service struct {
 	server transfer.IServer
 	router router.Router
+
+	handlers []handler.IHandler
+	filters  []filter.IFilter
 }
 
 func NewService(serv transfer.IServer) *Service {
 	instance := &Service{
 		server: serv,
 	}
-	serv.RegistHandler(instance)
+
+	serv.RegistDelegate(instance)
+	instance.RegistFilter(heartbeat.NewHeartBeatFilter())
+
 	return instance
 }
 
-func (self *Service) Regist(obj interface{}) {
+func (self *Service) RegistHanlder(obj handler.IHandler) {
 	self.router.Add(obj)
+	self.handlers = append(self.handlers, obj)
+}
+
+func (self *Service) RegistFilter(obj filter.IFilter) {
+	self.filters = append(self.filters, obj)
 }
 
 func (self *Service) OnStarted() {
 	fmt.Printf("OnStarted %p\n", self)
+	for _, handler := range self.handlers {
+		handler.OnStarted()
+	}
 }
 func (self *Service) OnError(err error) {
 	fmt.Println("OnError", err)
 }
 func (self *Service) OnStopped() {
 	fmt.Println("OnStopped")
+	for _, handler := range self.handlers {
+		handler.OnStopped()
+	}
 }
 func (self *Service) OnNewClient(client transfer.IClient) {
 	fmt.Println("OnNewClient", client)
 	sess := session.NewSession(client)
+
+	for _, filter := range self.filters {
+		if !filter.OnNewClient(sess) {
+			return
+		}
+	}
+
+	for _, handler := range self.handlers {
+		handler.OnNewClient(sess)
+	}
+
 	go func() {
 		for {
+		NextLoop:
 			header, bodyBuf, err := client.Recv()
 			fmt.Printf("Recv:\n\theader => %#v\n\terr => %v\n", header, err)
+			fmt.Printf("\tbody => %#v\nerr => %v\n", bodyBuf, err)
 			if err != nil {
 				//TODO: log err
 				break
 			}
 
-			fmt.Printf("Recv:\n\tbody => %#v\nerr => %v\n", bodyBuf, err)
-			if err != nil {
-				//TODO: log err
-				break
+			//filters
+			for _, filter := range self.filters {
+				if !filter.OnRecv(sess, header, bodyBuf) {
+					goto NextLoop
+				}
 			}
 
+			//map to handler
 			switch header.Type {
 			case pkg.PKG_NOTIFY:
 				self.callRouteFunc(sess, header, bodyBuf)
@@ -64,10 +99,10 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 					//TODO: log err
 					break
 				}
-			case pkg.PKG_HEARTBEAT:
-				//TODO:
-			case pkg.PKG_HEARTBEAT_RESPONSE:
-				//TODO:
+			case pkg.PKG_HEARTBEAT: /* Can not come to here */
+				fallthrough
+			case pkg.PKG_HEARTBEAT_RESPONSE: /* Can not come to here */
+				fallthrough
 			default:
 				break
 			}
@@ -93,13 +128,19 @@ func (self *Service) callRouteFunc(sess *session.Session, header *pkg.Header, bo
 }
 
 func (self *Service) response(sess *session.Session, header *pkg.Header, results []interface{}) error {
-	if len(results) <= 0 {
+	if results == nil || len(results) <= 0 {
 		respHeader := *header
 		return sess.Send(&respHeader, []byte{})
 	}
 
+	result := results[0]
+	/* check error != nil */
+	if len(results) == 2 && results[1] != nil {
+		result = results[1]
+	}
+
 	encoder := encode.GetEncodeDecoder(header.Encoding)
-	body, err := encoder.Marshal(results[0])
+	body, err := encoder.Marshal(result)
 	if err != nil {
 		return err
 	}

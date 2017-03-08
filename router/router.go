@@ -1,8 +1,19 @@
 package router
 
-import "reflect"
-import "fmt"
-import "strings"
+import (
+	"fmt"
+	"reflect"
+	"strings"
+
+	"github.com/jennal/goplay/handler"
+	"github.com/jennal/goplay/session"
+)
+
+var (
+	TYPE_IHANDLER reflect.Type = reflect.TypeOf(handler.IHandler(nil))
+	TYPE_SESSION  reflect.Type = reflect.TypeOf(session.NewSession(nil))
+	TYPE_ERROR                 = reflect.TypeOf((*error)(nil)).Elem()
+)
 
 type Router struct {
 	serverName string
@@ -60,6 +71,34 @@ func getStructName(name string) string {
 }
 
 func isValidMethod(m reflect.Method) bool {
-	//TODO:
+	/*
+	 * valid method:
+	 * func (*handler.IHandler) Method(*session.Session, interface{}) (interface{}, error)
+	 */
+
+	/* Args: *handler.IHandler, *session.Session, interface{} */
+	if m.Type.NumIn() != 3 {
+		return false
+	}
+
+	/* Returns: interface{}, error */
+	if m.Type.NumOut() > 2 {
+		return false
+	}
+
+	/* valid args */
+	if selfType := m.Type.In(0); !selfType.Implements(TYPE_IHANDLER) {
+		return false
+	}
+
+	if sessType := m.Type.In(1); sessType.Kind() != reflect.Ptr || sessType != TYPE_SESSION {
+		return false
+	}
+
+	/* valid return */
+	if retType := m.Type.Out(1); retType != TYPE_ERROR {
+		return false
+	}
+
 	return true
 }

@@ -21,15 +21,15 @@ type IClient interface {
 type IServer interface {
 	event.IEvent
 
-	RegistHandler(handler IServerHandler)
-	UnregistHandler(handler IServerHandler)
+	RegistDelegate(Delegate IServerDelegate)
+	UnregistDelegate(Delegate IServerDelegate)
 
 	GetClients() []IClient
 	Start() error
 	Stop() error
 }
 
-type IServerHandler interface {
+type IServerDelegate interface {
 	OnStarted()
 	OnError(err error)
 	OnStopped()

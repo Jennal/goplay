@@ -48,7 +48,7 @@ func (self *ServerHandler) OnNewClient(client transfer.IClient) {
 
 func TestTcp(t *testing.T) {
 	serv := NewServer("", 8888)
-	serv.RegistHandler(&ServerHandler{})
+	serv.RegistDelegate(&ServerHandler{})
 	go serv.Start()
 
 	cli := NewClient()

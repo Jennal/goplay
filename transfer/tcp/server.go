@@ -27,18 +27,18 @@ func NewServer(host string, port int) transfer.IServer {
 	}
 }
 
-func (serv *server) RegistHandler(handler transfer.IServerHandler) {
-	serv.On(transfer.EVENT_SERVER_STARTED, handler, handler.OnStarted)
-	serv.On(transfer.EVENT_SERVER_STOPPED, handler, handler.OnStopped)
-	serv.On(transfer.EVENT_SERVER_ERROR, handler, handler.OnError)
-	serv.On(transfer.EVENT_SERVER_NEW_CLIENT, handler, handler.OnNewClient)
+func (serv *server) RegistDelegate(delegate transfer.IServerDelegate) {
+	serv.On(transfer.EVENT_SERVER_STARTED, delegate, delegate.OnStarted)
+	serv.On(transfer.EVENT_SERVER_STOPPED, delegate, delegate.OnStopped)
+	serv.On(transfer.EVENT_SERVER_ERROR, delegate, delegate.OnError)
+	serv.On(transfer.EVENT_SERVER_NEW_CLIENT, delegate, delegate.OnNewClient)
 }
 
-func (serv *server) UnregistHandler(handler transfer.IServerHandler) {
-	serv.Off(transfer.EVENT_SERVER_STARTED, handler)
-	serv.Off(transfer.EVENT_SERVER_STOPPED, handler)
-	serv.Off(transfer.EVENT_SERVER_ERROR, handler)
-	serv.Off(transfer.EVENT_SERVER_NEW_CLIENT, handler)
+func (serv *server) UnregistDelegate(delegate transfer.IServerDelegate) {
+	serv.Off(transfer.EVENT_SERVER_STARTED, delegate)
+	serv.Off(transfer.EVENT_SERVER_STOPPED, delegate)
+	serv.Off(transfer.EVENT_SERVER_ERROR, delegate)
+	serv.Off(transfer.EVENT_SERVER_NEW_CLIENT, delegate)
 }
 
 func (serv *server) GetClients() []transfer.IClient {
