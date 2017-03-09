@@ -45,7 +45,7 @@ func (self *Handler) Add(sess *session.Session, n int) (int, *handler.HandlerErr
 }
 
 func main() {
-	ser := tcp.NewServer("", 9990)
+	ser := tcp.NewServer("", 9999)
 	serv := service.NewService("test", ser)
 
 	serv.RegistHanlder(&Handler{})
@@ -55,9 +55,10 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	fmt.Scanf("%s", nil)
 
 	cli := tcp.NewClient()
-	cli.Connect("", 9990)
+	cli.Connect("", 9999)
 
 	data, err := json.Marshal("Hello From Client")
 	fmt.Println("json encode:", string(data))
