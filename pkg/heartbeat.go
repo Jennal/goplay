@@ -1,7 +1,7 @@
 package pkg
 
-func NewHeartBeatHeader() *Header {
-	return NewHeader(PKG_HEARTBEAT, ENCODING_NONE, "")
+func NewHeartBeatHeader(idGen *IDGen) *Header {
+	return NewHeader(PKG_HEARTBEAT, ENCODING_NONE, idGen, "")
 }
 
 func NewHeartBeatResponseHeader(h *Header) *Header {

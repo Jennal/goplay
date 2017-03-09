@@ -10,6 +10,7 @@ import (
 	"github.com/jennal/goplay/event"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/transfer"
+	"github.com/jennal/goplay/transfer/base"
 )
 
 var (
@@ -18,6 +19,8 @@ var (
 
 type client struct {
 	*event.Event
+	*base.HeaderCreator
+
 	conn        net.Conn
 	isConnected bool
 
@@ -27,16 +30,18 @@ type client struct {
 
 func NewClientWithConnect(conn net.Conn) transfer.IClient {
 	return &client{
-		Event:       event.NewEvent(),
-		conn:        conn,
-		isConnected: true,
+		Event:         event.NewEvent(),
+		HeaderCreator: base.NewHeaderCreator(),
+		conn:          conn,
+		isConnected:   true,
 	}
 }
 
 func NewClient() transfer.IClient {
 	return &client{
-		Event:       event.NewEvent(),
-		isConnected: false,
+		Event:         event.NewEvent(),
+		HeaderCreator: base.NewHeaderCreator(),
+		isConnected:   false,
 	}
 }
 

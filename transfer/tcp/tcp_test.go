@@ -54,7 +54,7 @@ func TestTcp(t *testing.T) {
 	cli := NewClient()
 	cli.Connect("", 8888)
 
-	header := pkg.NewHeader(
+	header := cli.NewHeader(
 		pkg.PKG_HEARTBEAT,
 		pkg.ENCODING_JSON,
 		"test.hello.world",

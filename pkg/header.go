@@ -11,11 +11,6 @@ import (
 
 const HEADER_STATIC_SIZE = 5
 
-var (
-	HeartBeatHeader         = NewHeader(PKG_HEARTBEAT, ENCODING_NONE, "")
-	HeartBeatResponseHeader = NewHeader(PKG_HEARTBEAT_RESPONSE, ENCODING_NONE, "")
-)
-
 type Header struct {
 	Type        PackageType
 	Encoding    EncodingType
@@ -24,11 +19,11 @@ type Header struct {
 	Route       string
 }
 
-func NewHeader(t PackageType, e EncodingType, r string) *Header {
+func NewHeader(t PackageType, e EncodingType, idGen *IDGen, r string) *Header {
 	return &Header{
 		Type:        t,
 		Encoding:    e,
-		ID:          NextID(),
+		ID:          idGen.NextID(),
 		ContentSize: 0,
 		Route:       r,
 	}

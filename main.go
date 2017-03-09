@@ -57,7 +57,7 @@ func main() {
 		header, body, err := cli.Recv()
 		fmt.Println(time.Now(), header, body, err)
 		if header.Type == pkg.PKG_HEARTBEAT {
-			respHeader := pkg.NewHeartBeatResponseHeader(header)
+			respHeader := cli.NewHeartBeatResponseHeader(header)
 			cli.Send(respHeader, []byte{})
 		}
 	}

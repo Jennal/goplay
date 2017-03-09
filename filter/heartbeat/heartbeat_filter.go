@@ -78,8 +78,8 @@ func (self *HeartBeatFilter) checkTimeOut() {
 	}
 }
 
-func (self *HeartBeatFilter) New() *pkg.Header {
-	h := pkg.NewHeartBeatHeader()
+func (self *HeartBeatFilter) New(sess *session.Session) *pkg.Header {
+	h := sess.NewHeartBeatHeader()
 	self.pushTime(h.ID, time.Now())
 	return h
 }
@@ -97,7 +97,7 @@ func (self *HeartBeatFilter) OnNewClient(sess *session.Session) bool /* return f
 			case <-exitSign:
 				return
 			default:
-				sess.Send(self.New(), []byte{})
+				sess.Send(self.New(sess), []byte{})
 				self.sendCount++
 				time.Sleep(INTERNAL)
 			}
@@ -114,7 +114,7 @@ func (self *HeartBeatFilter) OnRecv(sess *session.Session, header *pkg.Header, b
 
 	switch header.Type {
 	case pkg.PKG_HEARTBEAT:
-		resp := pkg.NewHeartBeatResponseHeader(header)
+		resp := sess.NewHeartBeatResponseHeader(header)
 		sess.Send(resp, []byte{})
 	case pkg.PKG_HEARTBEAT_RESPONSE:
 		lastTime := self.popTime(header.ID)

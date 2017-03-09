@@ -2,14 +2,22 @@ package pkg
 
 const maxID PackageIDType = 255
 
-var nextID PackageIDType = 0
+type IDGen struct {
+	nextID PackageIDType
+}
 
-func NextID() PackageIDType {
-	if nextID == maxID {
-		defer func() { nextID = 0 }()
+func NewIDGen() *IDGen {
+	return &IDGen{
+		nextID: 0,
+	}
+}
+
+func (self *IDGen) NextID() PackageIDType {
+	if self.nextID == maxID {
+		defer func() { self.nextID = 0 }()
 	} else {
-		defer func() { nextID++ }()
+		defer func() { self.nextID++ }()
 	}
 
-	return nextID
+	return self.nextID
 }

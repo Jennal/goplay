@@ -3,10 +3,12 @@ package transfer
 import (
 	"github.com/jennal/goplay/event"
 	"github.com/jennal/goplay/pkg"
+	"github.com/jennal/goplay/transfer/base"
 )
 
 type IClient interface {
 	event.IEvent
+	base.IHeaderCreator
 
 	IsConnected() bool
 	Connect(host string, port int) error
