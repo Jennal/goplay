@@ -62,7 +62,7 @@ func (self *HeartBeatManager) OnRecv(sess *session.Session, header *pkg.Header, 
 
 	result := f.OnRecv(sess, header, body)
 	self.summary(f)
-	fmt.Println(self.Info())
+	// fmt.Println(self.Info())
 	return result
 }
 

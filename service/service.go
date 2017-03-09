@@ -77,8 +77,7 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 		for {
 		NextLoop:
 			header, bodyBuf, err := client.Recv()
-			fmt.Printf("Recv:\n\theader => %#v\n\terr => %v\n", header, err)
-			fmt.Printf("\tbody => %#v\nerr => %v\n", bodyBuf, err)
+			fmt.Printf("Recv:\n\theader => %#v\n\tbody => %#v\n\terr => %v\n", header, bodyBuf, err)
 			if err != nil {
 				//TODO: log err
 				break
@@ -107,6 +106,8 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 			case pkg.PKG_HEARTBEAT_RESPONSE: /* Can not come to here */
 				fallthrough
 			default:
+				//TODO: log err
+				fmt.Printf("What?? Can't Reach Here!! Recv:\n\theader => %#v\n\tbody => %#v\n\terr => %v\n", header, bodyBuf, err)
 				break
 			}
 		}
@@ -120,11 +121,17 @@ func (self *Service) callRouteFunc(sess *session.Session, header *pkg.Header, bo
 	 * 3. call route func
 	 */
 	method := self.router.Get(header.Route)
+	if method == nil {
+		//TODO: log err
+		fmt.Println("Service.callRouteFunc error: can't find method with route", header.Route)
+		return nil
+	}
 	val := method.NewArg(2)
 	decoder := encode.GetEncodeDecoder(header.Encoding)
-	err := decoder.Unmarshal(bodyBuf, val)
+	err := decoder.Unmarshal(bodyBuf, &val)
 	if err != nil {
 		//TODO: log err
+		fmt.Println("Service.callRouteFunc error: decoder.Unmarshal failed", err)
 		return nil
 	}
 	return method.Call(sess, val)

@@ -1,23 +1,15 @@
-package main
+package service
 
 import (
 	"encoding/json"
 	"fmt"
+	"testing"
 
-	"github.com/jennal/goplay/handler"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/service"
 	"github.com/jennal/goplay/session"
 	"github.com/jennal/goplay/transfer/tcp"
 )
-
-func init() {
-	fmt.Println("init-1")
-}
-
-func init() {
-	fmt.Println("init-2")
-}
 
 type Handler struct{}
 
@@ -33,12 +25,12 @@ func (self *Handler) OnNewClient(sess *session.Session) {
 	fmt.Println("Handler-OnNewClient", sess)
 }
 
-func (self *Handler) Test(sess *session.Session, line string) *handler.HandlerError {
+func (self *Handler) Test(sess *session.Session, line string) error {
 	fmt.Println("Handler-Test", sess, line)
 	return nil
 }
 
-func main() {
+func TestService(t *testing.T) {
 	ser := tcp.NewServer("", 9990)
 	serv := service.NewService("test", ser)
 
@@ -53,14 +45,13 @@ func main() {
 	cli := tcp.NewClient()
 	cli.Connect("", 9990)
 
-	data, err := json.Marshal("Hello From Client")
-	fmt.Println("json encode:", string(data))
+	data, err := json.Marshal("Hello")
 	if err != nil {
 		fmt.Println("json.Marshal error:", err)
 	} else {
-		// var str string
-		// json.Unmarshal(data, &str)
-		// fmt.Println("Unmarshal:", str)
+		var str string
+		json.Unmarshal(data, &str)
+		fmt.Println("Unmarshal:", str)
 		cli.Send(cli.NewHeader(pkg.PKG_NOTIFY, pkg.ENCODING_JSON, "test.handler.test"), data)
 	}
 
@@ -77,6 +68,4 @@ func main() {
 			}
 		}
 	}()
-
-	fmt.Scanf("%s", nil)
 }

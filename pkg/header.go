@@ -3,7 +3,6 @@ package pkg
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 
 	"github.com/jennal/goplay/helpers"
@@ -54,7 +53,7 @@ func ReadHeader(reader io.Reader, header *Header) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	fmt.Println("Header:", err, buffer)
+	// fmt.Println("Header:", err, buffer)
 
 	routeBuf := make([]byte, 1)
 	_, err = reader.Read(routeBuf)
@@ -74,7 +73,7 @@ func ReadHeader(reader io.Reader, header *Header) (int, error) {
 	}
 
 	_, err = UnmarshalHeader(buffer, header)
-	fmt.Println(header)
+	// fmt.Println(header)
 	if err != nil {
 		return 0, err
 	}

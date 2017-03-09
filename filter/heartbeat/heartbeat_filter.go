@@ -71,7 +71,7 @@ func (self *HeartBeatProcessor) checkTimeOut() {
 
 		for id, val := range self.times {
 			if now.Sub(val) > TIMEOUT {
-				fmt.Printf("\t => Timeout: %v => %v, id = %v\n", now, val, id)
+				// fmt.Printf("\t => Timeout: %v => %v, id = %v\n", now, val, id)
 				ids = append(ids, id)
 			}
 		}
@@ -92,7 +92,7 @@ func (self *HeartBeatProcessor) incTimeOut() bool {
 	defer self.timeoutMutex.Unlock()
 
 	self.timeoutCount++
-	fmt.Println("TimeOut:", self.sess, self.timeoutCount, MAX_TIMEOUT)
+	// fmt.Println("TimeOut:", self.sess, self.timeoutCount, MAX_TIMEOUT)
 	if self.timeoutCount >= MAX_TIMEOUT {
 		self.sess.Disconnect()
 		return false
@@ -106,7 +106,7 @@ func (self *HeartBeatProcessor) resetTimeOut() {
 	defer self.timeoutMutex.Unlock()
 
 	self.timeoutCount = 0
-	fmt.Println("Reset timeOut:", self.sess, self.timeoutCount, MAX_TIMEOUT)
+	// fmt.Println("Reset timeOut:", self.sess, self.timeoutCount, MAX_TIMEOUT)
 }
 
 func (self *HeartBeatProcessor) New(sess *session.Session) *pkg.Header {
@@ -120,7 +120,7 @@ func (self *HeartBeatProcessor) OnNewClient(sess *session.Session) bool /* retur
 	exitSign := make(chan int)
 
 	sess.On(transfer.EVENT_CLIENT_DISCONNECTED, self, func(cli transfer.IClient) {
-		fmt.Println("HeartBeatProcessor-Client-Disconnected", sess)
+		// fmt.Println("HeartBeatProcessor-Client-Disconnected", sess)
 		exitSign <- 1
 	})
 

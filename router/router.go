@@ -12,7 +12,7 @@ import (
 var (
 	TYPE_IHANDLER reflect.Type = reflect.TypeOf((*handler.IHandler)(nil)).Elem()
 	TYPE_SESSION  reflect.Type = reflect.TypeOf(session.NewSession(nil))
-	TYPE_ERROR                 = reflect.TypeOf((*error)(nil)).Elem()
+	TYPE_ERROR                 = reflect.TypeOf((*handler.HandlerError)(nil))
 )
 
 type Router struct {
@@ -29,7 +29,7 @@ func NewRouter(serverName string) *Router {
 
 func (r *Router) Add(obj interface{}) {
 	tp := reflect.TypeOf(obj)
-	fmt.Println(tp.NumMethod())
+	// fmt.Println(tp.NumMethod())
 	for i := 0; i < tp.NumMethod(); i++ {
 		method := tp.Method(i)
 		if !isValidMethod(method) {
@@ -46,6 +46,7 @@ func (r *Router) Add(obj interface{}) {
 
 		r.data[path] = NewMethod(obj, method)
 	}
+	// fmt.Printf("Router: %#v\n", r.data)
 }
 
 func (r *Router) Get(path string) *Method {
@@ -73,7 +74,7 @@ func getStructName(name string) string {
 func isValidMethod(m reflect.Method) bool {
 	/*
 	 * valid method:
-	 * func (*handler.IHandler) Method(*session.Session, interface{}) (interface{}, error)
+	 * func (*handler.IHandler) Method(*session.Session, interface{}) (interface{}, *handler.HandlerError)
 	 */
 
 	/* Args: *handler.IHandler, *session.Session, interface{} */
@@ -82,7 +83,7 @@ func isValidMethod(m reflect.Method) bool {
 		return false
 	}
 
-	/* Returns: interface{}, error */
+	/* Returns: interface{}, *handler.HandlerError */
 	if m.Type.NumOut() > 2 {
 		// fmt.Println("isValidMethod-2")
 		return false
