@@ -30,7 +30,7 @@ func NewService(name string, serv transfer.IServer) *Service {
 	}
 
 	serv.RegistDelegate(instance)
-	instance.RegistFilter(heartbeat.NewHeartBeatFilter())
+	instance.RegistFilter(heartbeat.NewHeartBeatManager())
 
 	return instance
 }

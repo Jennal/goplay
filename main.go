@@ -53,10 +53,10 @@ func main() {
 	cli := tcp.NewClient()
 	cli.Connect("", 9990)
 
-	for {
+	for i := 0; true; i++ {
 		header, body, err := cli.Recv()
 		fmt.Println(time.Now(), header, body, err)
-		if header.Type == pkg.PKG_HEARTBEAT {
+		if i%4 == 0 && header.Type == pkg.PKG_HEARTBEAT {
 			respHeader := cli.NewHeartBeatResponseHeader(header)
 			cli.Send(respHeader, []byte{})
 		}
