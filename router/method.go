@@ -39,5 +39,5 @@ func (m *Method) NewArg(i int) interface{} {
 	}
 
 	argType := m.method.Type.In(i)
-	return reflect.New(argType).Elem().Interface()
+	return reflect.New(argType).Interface()
 }

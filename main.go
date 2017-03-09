@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/jennal/goplay/handler"
 	"github.com/jennal/goplay/pkg"
@@ -38,6 +39,11 @@ func (self *Handler) Test(sess *session.Session, line string) *handler.HandlerEr
 	return nil
 }
 
+func (self *Handler) Add(sess *session.Session, n int) (int, *handler.HandlerError) {
+	fmt.Println("Handler-Add", sess, n)
+	return n + 1, nil
+}
+
 func main() {
 	ser := tcp.NewServer("", 9990)
 	serv := service.NewService("test", ser)
@@ -64,10 +70,18 @@ func main() {
 		cli.Send(cli.NewHeader(pkg.PKG_NOTIFY, pkg.ENCODING_JSON, "test.handler.test"), data)
 	}
 
+	data, err = json.Marshal(1000)
+	fmt.Println("json encode:", string(data))
+	if err != nil {
+		fmt.Println("json.Marshal error:", err)
+	} else {
+		cli.Send(cli.NewHeader(pkg.PKG_REQUEST, pkg.ENCODING_JSON, "test.handler.add"), data)
+	}
+
 	go func() {
 		for i := 0; true; i++ {
-			header, _, err := cli.Recv()
-			// fmt.Println(time.Now(), header, body, err)
+			header, body, err := cli.Recv()
+			fmt.Printf("[%v] Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", time.Now(), header, body, string(body), err)
 			if err != nil {
 				break
 			}

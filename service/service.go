@@ -3,10 +3,13 @@ package service
 import (
 	"fmt"
 
+	"reflect"
+
 	"github.com/jennal/goplay/encode"
 	"github.com/jennal/goplay/filter"
 	"github.com/jennal/goplay/filter/heartbeat"
 	"github.com/jennal/goplay/handler"
+	"github.com/jennal/goplay/helpers"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/router"
 	"github.com/jennal/goplay/session"
@@ -77,7 +80,7 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 		for {
 		NextLoop:
 			header, bodyBuf, err := client.Recv()
-			fmt.Printf("Recv:\n\theader => %#v\n\tbody => %#v\n\terr => %v\n", header, bodyBuf, err)
+			fmt.Printf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
 			if err != nil {
 				//TODO: log err
 				break
@@ -96,6 +99,7 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 				self.callRouteFunc(sess, header, bodyBuf)
 			case pkg.PKG_REQUEST:
 				results := self.callRouteFunc(sess, header, bodyBuf)
+				// fmt.Printf(" => Loop result: %#v\n", results)
 				err := self.response(sess, header, results)
 				if err != nil {
 					//TODO: log err
@@ -127,27 +131,33 @@ func (self *Service) callRouteFunc(sess *session.Session, header *pkg.Header, bo
 		return nil
 	}
 	val := method.NewArg(2)
+	// fmt.Printf("Service.callRouteFunc: %#v => %v\n", val, reflect.TypeOf(val))
 	decoder := encode.GetEncodeDecoder(header.Encoding)
-	err := decoder.Unmarshal(bodyBuf, &val)
+	err := decoder.Unmarshal(bodyBuf, val)
 	if err != nil {
 		//TODO: log err
 		fmt.Println("Service.callRouteFunc error: decoder.Unmarshal failed", err)
 		return nil
 	}
-	return method.Call(sess, val)
+	// fmt.Printf("Service.callRouteFunc: %#v => %v\n", val, reflect.TypeOf(val))
+	return method.Call(sess, helpers.GetValueFromPtr(val))
 }
 
 func (self *Service) response(sess *session.Session, header *pkg.Header, results []interface{}) error {
+	respHeader := *header
+	respHeader.Type = pkg.PKG_RESPONSE
+
 	if results == nil || len(results) <= 0 {
-		respHeader := *header
 		return sess.Send(&respHeader, []byte{})
 	}
 
 	result := results[0]
 	/* check error != nil */
-	if len(results) == 2 && results[1] != nil {
+	if len(results) == 2 && !reflect.ValueOf(results[1]).IsNil() {
 		result = results[1]
 	}
+
+	// fmt.Println("result:", result)
 
 	encoder := encode.GetEncodeDecoder(header.Encoding)
 	body, err := encoder.Marshal(result)
@@ -155,6 +165,5 @@ func (self *Service) response(sess *session.Session, header *pkg.Header, results
 		return err
 	}
 
-	respHeader := *header
 	return sess.Send(&respHeader, body)
 }
