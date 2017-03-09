@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jennal/goplay/handler"
+	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/session"
 )
 
@@ -39,8 +40,7 @@ func (r *Router) Add(obj interface{}) {
 
 		path := r.getPath(tp, method)
 		if _, ok := r.data[path]; ok {
-			//TODO:Error
-			fmt.Println("Router.Add: error: path already exists!", path)
+			log.Errorf("Router.Add: error: path(%v) already exists!", path)
 			continue
 		}
 

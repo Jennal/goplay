@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/session"
 	"github.com/jennal/goplay/transfer"
@@ -151,7 +152,7 @@ func (self *HeartBeatProcessor) OnRecv(sess *session.Session, header *pkg.Header
 	}
 
 	if sess != self.sess {
-		//TODO: can't come to here, log error
+		log.Errorf("can't come to here, must be something wrong")
 		return true
 	}
 

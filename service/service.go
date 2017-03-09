@@ -10,6 +10,7 @@ import (
 	"github.com/jennal/goplay/filter/heartbeat"
 	"github.com/jennal/goplay/handler"
 	"github.com/jennal/goplay/helpers"
+	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/router"
 	"github.com/jennal/goplay/session"
@@ -80,9 +81,9 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 		for {
 		NextLoop:
 			header, bodyBuf, err := client.Recv()
-			fmt.Printf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
+			log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
 			if err != nil {
-				//TODO: log err
+				log.Errorf("recv err => %v\t|\theader => %#v\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
 				break
 			}
 
@@ -102,7 +103,7 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 				// fmt.Printf(" => Loop result: %#v\n", results)
 				err := self.response(sess, header, results)
 				if err != nil {
-					//TODO: log err
+					log.Errorf("response err => %v\t|\theader => %#v\results => %#v", err, header, results)
 					break
 				}
 			case pkg.PKG_HEARTBEAT: /* Can not come to here */
@@ -110,8 +111,7 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 			case pkg.PKG_HEARTBEAT_RESPONSE: /* Can not come to here */
 				fallthrough
 			default:
-				//TODO: log err
-				fmt.Printf("What?? Can't Reach Here!! Recv:\n\theader => %#v\n\tbody => %#v\n\terr => %v\n", header, bodyBuf, err)
+				log.Errorf("can't reach here!!\t|\theader => %#v\n\tbody => %#v\n\terr => %v\n", header, bodyBuf, err)
 				break
 			}
 		}
@@ -126,8 +126,7 @@ func (self *Service) callRouteFunc(sess *session.Session, header *pkg.Header, bo
 	 */
 	method := self.router.Get(header.Route)
 	if method == nil {
-		//TODO: log err
-		fmt.Println("Service.callRouteFunc error: can't find method with route", header.Route)
+		log.Errorf("can't find method with route: %s", header.Route)
 		return nil
 	}
 	val := method.NewArg(2)
@@ -135,8 +134,7 @@ func (self *Service) callRouteFunc(sess *session.Session, header *pkg.Header, bo
 	decoder := encode.GetEncodeDecoder(header.Encoding)
 	err := decoder.Unmarshal(bodyBuf, val)
 	if err != nil {
-		//TODO: log err
-		fmt.Println("Service.callRouteFunc error: decoder.Unmarshal failed", err)
+		log.Errorf("Service.callRouteFunc decoder.Unmarshal failed: %v", err)
 		return nil
 	}
 	// fmt.Printf("Service.callRouteFunc: %#v => %v\n", val, reflect.TypeOf(val))
