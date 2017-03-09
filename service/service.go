@@ -14,16 +14,19 @@ import (
 )
 
 type Service struct {
+	name   string
 	server transfer.IServer
-	router router.Router
+	router *router.Router
 
 	handlers []handler.IHandler
 	filters  []filter.IFilter
 }
 
-func NewService(serv transfer.IServer) *Service {
+func NewService(name string, serv transfer.IServer) *Service {
 	instance := &Service{
+		name:   name,
 		server: serv,
+		router: router.NewRouter(name),
 	}
 
 	serv.RegistDelegate(instance)

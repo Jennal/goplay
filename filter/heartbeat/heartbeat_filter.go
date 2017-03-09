@@ -5,6 +5,8 @@ import (
 
 	"sync"
 
+	"fmt"
+
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/session"
 	"github.com/jennal/goplay/transfer"
@@ -94,11 +96,11 @@ func (self *HeartBeatFilter) OnNewClient(sess *session.Session) bool /* return f
 			select {
 			case <-exitSign:
 				return
+			default:
+				sess.Send(self.New(), []byte{})
+				self.sendCount++
+				time.Sleep(INTERNAL)
 			}
-
-			sess.Send(self.New(), []byte{})
-			self.sendCount++
-			time.Sleep(INTERNAL)
 		}
 	}()
 
@@ -123,14 +125,27 @@ func (self *HeartBeatFilter) OnRecv(sess *session.Session, header *pkg.Header, b
 		self.recvCount++
 		self.lastPing = time.Since(*lastTime)
 		self.avgPing = (time.Duration)((float64(self.avgPing)*float64(self.recvCount-1) + float64(self.lastPing)) / float64(self.recvCount))
-		if self.lastPing < self.minPing {
+		if self.minPing == 0 || self.lastPing < self.minPing {
 			self.minPing = self.lastPing
 		}
 
-		if self.lastPing > self.maxPing {
+		if self.maxPing == 0 || self.lastPing > self.maxPing {
 			self.maxPing = self.lastPing
 		}
+
+		fmt.Println(self.Info())
 	}
 
 	return false
+}
+
+func (self *HeartBeatFilter) Info() string {
+	return "Heart Beat Statistics ==========\n" +
+		fmt.Sprintf("=> Last Ping: %v\n", self.lastPing/time.Millisecond) +
+		fmt.Sprintf("=> Min Ping: %v\n", self.minPing/time.Millisecond) +
+		fmt.Sprintf("=> Max Ping: %v\n", self.maxPing/time.Millisecond) +
+		fmt.Sprintf("=> Avg Ping: %v\n", self.avgPing/time.Millisecond) +
+		fmt.Sprintf("=> Send Count: %v\n", self.sendCount) +
+		fmt.Sprintf("=> Recv Count: %v\n", self.recvCount) +
+		fmt.Sprintf("=> Lost Rate: %.2g %%", 100-100*float64(self.recvCount)/float64(self.sendCount))
 }

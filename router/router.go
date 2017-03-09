@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	TYPE_IHANDLER reflect.Type = reflect.TypeOf(handler.IHandler(nil))
+	TYPE_IHANDLER reflect.Type = reflect.TypeOf((*handler.IHandler)(nil)).Elem()
 	TYPE_SESSION  reflect.Type = reflect.TypeOf(session.NewSession(nil))
 	TYPE_ERROR                 = reflect.TypeOf((*error)(nil)).Elem()
 )
@@ -33,7 +33,7 @@ func (r *Router) Add(obj interface{}) {
 	for i := 0; i < tp.NumMethod(); i++ {
 		method := tp.Method(i)
 		if !isValidMethod(method) {
-			fmt.Println("1", isValidMethod(method), method)
+			// fmt.Println("1", isValidMethod(method), method)
 			continue
 		}
 
@@ -78,25 +78,39 @@ func isValidMethod(m reflect.Method) bool {
 
 	/* Args: *handler.IHandler, *session.Session, interface{} */
 	if m.Type.NumIn() != 3 {
+		// fmt.Println("isValidMethod-1")
 		return false
 	}
 
 	/* Returns: interface{}, error */
 	if m.Type.NumOut() > 2 {
+		// fmt.Println("isValidMethod-2")
 		return false
 	}
 
 	/* valid args */
 	if selfType := m.Type.In(0); !selfType.Implements(TYPE_IHANDLER) {
+		// fmt.Println("isValidMethod-3")
 		return false
 	}
 
 	if sessType := m.Type.In(1); sessType.Kind() != reflect.Ptr || sessType != TYPE_SESSION {
+		// fmt.Println("isValidMethod-4")
 		return false
 	}
 
 	/* valid return */
+	if m.Type.NumOut() == 1 {
+		if retType := m.Type.Out(0); retType != TYPE_ERROR {
+			// fmt.Println("isValidMethod-5")
+			return false
+		}
+
+		return true
+	}
+
 	if retType := m.Type.Out(1); retType != TYPE_ERROR {
+		// fmt.Println("isValidMethod-6")
 		return false
 	}
 

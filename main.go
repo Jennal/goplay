@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 
-	"io"
+	"time"
 
-	"github.com/jennal/goplay/transfer"
+	"github.com/jennal/goplay/pkg"
+	"github.com/jennal/goplay/service"
+	"github.com/jennal/goplay/session"
+	"github.com/jennal/goplay/transfer/tcp"
 )
 
 func init() {
@@ -17,88 +19,48 @@ func init() {
 	fmt.Println("init-2")
 }
 
-type ServerHandler struct {
+type Handler struct{}
+
+func (self *Handler) OnStarted() {
+	fmt.Println("Handler-OnStarted")
 }
 
-func (self *ServerHandler) NewFunc() {
+func (self *Handler) OnStopped() {
+	fmt.Println("Handler-OnStopped")
 }
 
-func (self *ServerHandler) OnStarted() {
-	fmt.Printf("OnStarted %p\n", self)
-
-	// cli := tcp.NewClient()
-	// cli.Connect("", 8081)
-
-	// header := pkg.NewHeader(
-	// 	pkg.PKG_HEARTBEAT,
-	// 	pkg.ENCODING_JSON,
-	// 	"test.hello.world",
-	// )
-	// fmt.Println(header)
-	// cli.Send(header, Message{
-	// 	Id: 1,
-	// 	Ok: true,
-	// 	M: map[string]int{
-	// 		"hello": 0,
-	// 		"world": 1,
-	// 	},
-	// 	Arr: []string{
-	// 		"from",
-	// 		"client",
-	// 	},
-	// })
-}
-func (self *ServerHandler) OnError(err error) {
-	fmt.Println("OnError", err)
-}
-func (self *ServerHandler) OnStopped() {
-	fmt.Println("OnStopped")
-}
-func (self *ServerHandler) OnNewClient(client transfer.IClient) {
-	fmt.Println("OnNewClient", client)
-	for {
-		header, body, err := client.Recv()
-		fmt.Printf("Recv:\n%#v\n%#v\n%v\n", header, body, err)
-		if err == io.EOF {
-			break
-		}
-	}
+func (self *Handler) OnNewClient(sess *session.Session) {
+	fmt.Println("Handler-OnNewClient", sess)
 }
 
-type Message struct {
-	Id  int
-	Ok  bool
-	M   map[string]int
-	Arr []string
+func (self *Handler) Test(sess *session.Session, line string) error {
+	fmt.Println("Handler-Test", sess, line)
+	return nil
 }
 
 func main() {
-	var inst interface{} = &ServerHandler{}
-	val := reflect.TypeOf(inst.(transfer.IServerHandler))
-	fmt.Println("name:", val.String())
-	for i := 0; i < val.NumMethod(); i++ {
-		method := val.Method(i)
-		fmt.Println("method:", method.Name, method.Type.String())
+	ser := tcp.NewServer("", 9990)
+	serv := service.NewService("test", ser)
 
-		if method.Name == "OnStarted" {
-			fmt.Printf("%p\n", inst)
-			method.Func.Call([]reflect.Value{
-				reflect.ValueOf(inst),
-			})
-		}
+	serv.RegistHanlder(&Handler{})
 
-		fmt.Printf("\t")
-		for j := 1; j < method.Type.NumIn(); j++ {
-			inT := method.Type.In(j)
-			fmt.Printf("%s ", inT.String())
-		}
-		fmt.Println()
+	err := ser.Start()
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 
-	// serv := tcp.NewServer("", 8081, &ServerHandler{})
-	// if err := serv.Start(); err != nil {
-	// 	fmt.Println(err)
-	// }
+	cli := tcp.NewClient()
+	cli.Connect("", 9990)
+
+	for {
+		header, body, err := cli.Recv()
+		fmt.Println(time.Now(), header, body, err)
+		if header.Type == pkg.PKG_HEARTBEAT {
+			respHeader := pkg.NewHeartBeatResponseHeader(header)
+			cli.Send(respHeader, []byte{})
+		}
+	}
 
 	fmt.Scanf("%s", nil)
 }
