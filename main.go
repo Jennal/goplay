@@ -31,6 +31,7 @@ func (self *Handler) OnStopped() {
 
 func (self *Handler) OnNewClient(sess *session.Session) {
 	fmt.Println("Handler-OnNewClient", sess)
+	sess.Push("test.push", "Hello from Push")
 }
 
 func (self *Handler) Test(sess *session.Session, line string) *pkg.ErrorMessage {

@@ -5,6 +5,7 @@ import (
 
 	"reflect"
 
+	"github.com/jennal/goplay/defaults"
 	"github.com/jennal/goplay/encode"
 	"github.com/jennal/goplay/filter"
 	"github.com/jennal/goplay/filter/heartbeat"
@@ -18,7 +19,9 @@ import (
 )
 
 type Service struct {
-	name   string
+	Name     string
+	Encoding pkg.EncodingType
+
 	server transfer.IServer
 	router *router.Router
 
@@ -28,15 +31,25 @@ type Service struct {
 
 func NewService(name string, serv transfer.IServer) *Service {
 	instance := &Service{
-		name:   name,
-		server: serv,
-		router: router.NewRouter(name),
+		Name:     name,
+		Encoding: defaults.Encoding,
+		server:   serv,
+		router:   router.NewRouter(name),
 	}
 
 	serv.RegistDelegate(instance)
 	instance.RegistFilter(heartbeat.NewHeartBeatManager())
 
 	return instance
+}
+
+func (self *Service) SetEncoding(e pkg.EncodingType) error {
+	if encoder := encode.GetEncodeDecoder(e); encoder != nil {
+		self.Encoding = e
+		return nil
+	}
+
+	return log.NewErrorf("can't find encoder with: %v", e)
 }
 
 func (self *Service) RegistHanlder(obj handler.IHandler) {
@@ -66,6 +79,7 @@ func (self *Service) OnStopped() {
 func (self *Service) OnNewClient(client transfer.IClient) {
 	fmt.Println("OnNewClient", client)
 	sess := session.NewSession(client)
+	sess.SetEncoding(self.Encoding)
 
 	for _, filter := range self.filters {
 		if !filter.OnNewClient(sess) {
