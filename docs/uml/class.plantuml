@@ -33,7 +33,6 @@ package encode {
 package pkg {
     enum PackageType extends uint8 {
         PKG_NOTIFY,
-        PKG_NOTIFY_RESPONSE,
         PKG_REQUEST,
         PKG_RESPONSE,
     }
