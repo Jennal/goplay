@@ -1,6 +1,7 @@
 package log
 
 import (
+	"errors"
 	"fmt"
 	l "log"
 	"os"
@@ -11,6 +12,8 @@ type Logger interface {
 	Logf(format string, args ...interface{})
 	Error(err error)
 	Errorf(format string, args ...interface{})
+	NewErrorf(format string, args ...interface{}) error
+	NewError(msg string) error
 }
 
 func setStdout() {
@@ -57,4 +60,18 @@ func (logger _logger) Error(err error) {
 func (logger _logger) Errorf(format string, args ...interface{}) {
 	setStderr()
 	l.Output(logger.depth, logger.prefix+fmt.Sprintf(format, args...))
+}
+
+func (logger _logger) NewErrorf(format string, args ...interface{}) error {
+	setStderr()
+	err := fmt.Errorf(format, args...)
+	l.Output(logger.depth, logger.prefix+err.Error())
+	return err
+}
+
+func (logger _logger) NewError(msg string) error {
+	setStderr()
+	err := errors.New(msg)
+	l.Output(logger.depth, logger.prefix+err.Error())
+	return err
 }

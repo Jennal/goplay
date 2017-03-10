@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jennal/goplay/handler"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/service"
 	"github.com/jennal/goplay/session"
@@ -34,12 +33,12 @@ func (self *Handler) OnNewClient(sess *session.Session) {
 	fmt.Println("Handler-OnNewClient", sess)
 }
 
-func (self *Handler) Test(sess *session.Session, line string) *handler.HandlerError {
+func (self *Handler) Test(sess *session.Session, line string) *pkg.ErrorMessage {
 	fmt.Println("Handler-Test", sess, line)
 	return nil
 }
 
-func (self *Handler) Add(sess *session.Session, n int) (int, *handler.HandlerError) {
+func (self *Handler) Add(sess *session.Session, n int) (int, *pkg.ErrorMessage) {
 	fmt.Println("Handler-Add", sess, n)
 	return n + 1, nil
 }

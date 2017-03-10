@@ -7,13 +7,14 @@ import (
 
 	"github.com/jennal/goplay/handler"
 	"github.com/jennal/goplay/log"
+	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/session"
 )
 
 var (
-	TYPE_IHANDLER reflect.Type = reflect.TypeOf((*handler.IHandler)(nil)).Elem()
-	TYPE_SESSION  reflect.Type = reflect.TypeOf(session.NewSession(nil))
-	TYPE_ERROR                 = reflect.TypeOf((*handler.HandlerError)(nil))
+	TYPE_IHANDLER = reflect.TypeOf((*handler.IHandler)(nil)).Elem()
+	TYPE_SESSION  = reflect.TypeOf(session.NewSession(nil))
+	TYPE_ERROR    = reflect.TypeOf((*pkg.ErrorMessage)(nil))
 )
 
 type Router struct {
@@ -74,7 +75,7 @@ func getStructName(name string) string {
 func isValidMethod(m reflect.Method) bool {
 	/*
 	 * valid method:
-	 * func (*handler.IHandler) Method(*session.Session, interface{}) (interface{}, *handler.HandlerError)
+	 * func (*handler.IHandler) Method(*session.Session, interface{}) (interface{}, *pkg.ErrorMessage)
 	 */
 
 	/* Args: *handler.IHandler, *session.Session, interface{} */
@@ -83,7 +84,7 @@ func isValidMethod(m reflect.Method) bool {
 		return false
 	}
 
-	/* Returns: interface{}, *handler.HandlerError */
+	/* Returns: interface{}, *pkg.ErrorMessage */
 	if m.Type.NumOut() > 2 {
 		// fmt.Println("isValidMethod-2")
 		return false

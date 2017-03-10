@@ -30,3 +30,13 @@ func (m *Method) Call(args ...interface{}) []interface{} {
 
 	return result
 }
+
+func (m *Method) NewArg(i int) interface{} {
+	t := reflect.TypeOf(m.method)
+	if t.NumIn() <= i {
+		return nil
+	}
+
+	argType := t.In(i)
+	return reflect.New(argType).Interface()
+}

@@ -75,11 +75,11 @@ func (serv *server) Start() error {
 		}
 	}()
 
-	serv.Emit(transfer.EVENT_SERVER_STARTED)
+	defer serv.Emit(transfer.EVENT_SERVER_STARTED)
 	return nil
 }
 
 func (serv *server) Stop() error {
-	serv.Emit(transfer.EVENT_SERVER_STOPPED)
+	defer serv.Emit(transfer.EVENT_SERVER_STOPPED)
 	return serv.listener.Close()
 }

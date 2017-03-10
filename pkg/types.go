@@ -4,6 +4,7 @@ type Status int16
 
 const (
 	STAT_OK Status = iota
+	STAT_ERR_TIMEOUT
 )
 
 type PackageType byte

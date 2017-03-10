@@ -2,6 +2,8 @@ package session
 
 import (
 	"github.com/jennal/goplay/data"
+	"github.com/jennal/goplay/encode"
+	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/transfer"
 )
 
@@ -24,22 +26,12 @@ func (s *Session) Bind(id int) {
 	s.ID = id
 }
 
-func (s *Session) Request(route string, data interface{}, callback interface{}) error {
-	// header := s.NewHeader(pkg.PKG_REQUEST, pkg.ENCODING_JSON, route)
-	//TODO:
-
-	return nil
-}
-
-func (s *Session) Notify(route string, data interface{}) error {
-	//TODO:
-	return nil
-}
-
-func (s *Session) Push(route string, data interface{}) error {
-	return s.Notify(route, data)
-}
-
-func (s *Session) AddListener(route string, callback interface{}) {
-	//TODO:
+func (s *Session) Push(encoding pkg.EncodingType, route string, data interface{}) error {
+	header := s.NewHeader(pkg.PKG_NOTIFY, encoding, route)
+	encoder := encode.GetEncodeDecoder(encoding)
+	buf, err := encoder.Marshal(data)
+	if err != nil {
+		return err
+	}
+	return s.Send(header, buf)
 }

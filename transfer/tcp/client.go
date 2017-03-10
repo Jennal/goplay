@@ -45,6 +45,16 @@ func NewClient() transfer.IClient {
 	}
 }
 
+func (client *client) RegistDelegate(delegate transfer.IClientDelegate) {
+	client.On(transfer.EVENT_CLIENT_CONNECTED, delegate, delegate.OnConnected)
+	client.On(transfer.EVENT_CLIENT_DISCONNECTED, delegate, delegate.OnDisconnected)
+}
+
+func (client *client) UnregistDelegate(delegate transfer.IClientDelegate) {
+	client.Off(transfer.EVENT_CLIENT_CONNECTED, delegate)
+	client.Off(transfer.EVENT_CLIENT_DISCONNECTED, delegate)
+}
+
 func (client *client) IsConnected() bool {
 	return client.isConnected
 }
@@ -62,6 +72,7 @@ func (client *client) Connect(host string, port int) error {
 	client.conn = conn
 	client.isConnected = true
 
+	defer client.Emit(transfer.EVENT_CLIENT_CONNECTED, client)
 	return nil
 }
 

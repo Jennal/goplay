@@ -3,7 +3,8 @@ package helpers
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
+
+	"github.com/jennal/goplay/log"
 )
 
 func GetBytes(i interface{}) ([]byte, error) {
@@ -15,7 +16,7 @@ func GetBytes(i interface{}) ([]byte, error) {
 
 func ToUInt32(buffer []byte) (uint32, error) {
 	if len(buffer) < 4 {
-		return 0, errors.New("length of buffer < 4")
+		return 0, log.NewError("length of buffer < 4")
 	}
 
 	var i uint32 = 0
@@ -27,7 +28,7 @@ func ToUInt32(buffer []byte) (uint32, error) {
 
 func ToUInt16(buffer []byte) (uint16, error) {
 	if len(buffer) < 2 {
-		return 0, errors.New("length of buffer < 2")
+		return 0, log.NewError("length of buffer < 2")
 	}
 
 	var i uint16 = 0

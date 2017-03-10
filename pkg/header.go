@@ -2,10 +2,10 @@ package pkg
 
 import (
 	"bytes"
-	"errors"
 	"io"
 
 	"github.com/jennal/goplay/helpers"
+	"github.com/jennal/goplay/log"
 )
 
 const HEADER_STATIC_SIZE = 5
@@ -83,7 +83,7 @@ func ReadHeader(reader io.Reader, header *Header) (int, error) {
 
 func UnmarshalHeader(data []byte, header *Header) (int, error) {
 	if len(data) < HEADER_STATIC_SIZE {
-		return -1, errors.New("data size < HEADER_STATIC_SIZE")
+		return -1, log.NewError("data size < HEADER_STATIC_SIZE")
 	}
 
 	buffer := bytes.NewBuffer(data)

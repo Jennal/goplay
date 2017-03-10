@@ -17,3 +17,11 @@ func Error(err error) {
 func Errorf(format string, args ...interface{}) {
 	defaultLogger.Errorf(format, args...)
 }
+
+func NewErrorf(format string, args ...interface{}) error {
+	return defaultLogger.NewErrorf(format, args...)
+}
+
+func NewError(msg string) error {
+	return defaultLogger.NewError(msg)
+}

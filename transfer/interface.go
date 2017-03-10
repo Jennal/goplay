@@ -10,6 +10,9 @@ type IClient interface {
 	event.IEvent
 	base.IHeaderCreator
 
+	RegistDelegate(delegate IClientDelegate)
+	UnregistDelegate(delegate IClientDelegate)
+
 	IsConnected() bool
 	Connect(host string, port int) error
 	Disconnect() error
@@ -20,11 +23,16 @@ type IClient interface {
 	Recv() (*pkg.Header, []byte, error)
 }
 
+type IClientDelegate interface {
+	OnConnected(IClient)
+	OnDisconnected(IClient)
+}
+
 type IServer interface {
 	event.IEvent
 
-	RegistDelegate(Delegate IServerDelegate)
-	UnregistDelegate(Delegate IServerDelegate)
+	RegistDelegate(delegate IServerDelegate)
+	UnregistDelegate(delegate IServerDelegate)
 
 	GetClients() []IClient
 	Start() error
