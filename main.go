@@ -34,6 +34,7 @@ func (self *Handler) OnNewClient(sess *session.Session) {
 
 func (self *Handler) Test(sess *session.Session, line string) *pkg.ErrorMessage {
 	fmt.Println("Handler-Test", sess, line)
+	sess.Push("test.push", "Service: "+line)
 	return nil
 }
 
@@ -57,6 +58,9 @@ func main() {
 
 	cli := tcp.NewClient()
 	client := service.NewServiceClient(cli, pkg.ENCODING_JSON)
+	client.AddListener("test.push", func(line string) {
+		fmt.Println("[test.push] recv: ", line)
+	})
 	client.Connect("", 9999)
 
 	client.Request("test.handler.add", 1, func(result int) {
@@ -64,6 +68,8 @@ func main() {
 	}, func(err *pkg.ErrorMessage) {
 		fmt.Println("[test.handler.add] error: ", err)
 	})
+
+	client.Notify("test.handler.test", "Hello from Client")
 
 	// data, err := json.Marshal("Hello From Client")
 	// fmt.Println("json encode:", string(data))

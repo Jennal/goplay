@@ -91,7 +91,10 @@ func (s *ServiceClient) setupEventLoop() {
 					break
 				default:
 					header, bodyBuf, err := client.Recv()
-					log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
+					if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
+						log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
+					}
+
 					if err != nil {
 						log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
 						client.Disconnect()
@@ -141,6 +144,9 @@ func (s *ServiceClient) recvPush(header *pkg.Header, body []byte) {
 func (s *ServiceClient) recvResponse(header *pkg.Header, body []byte) {
 	s.requestCbsMutex.Lock()
 	cbs, ok := s.requestCbs[header.ID]
+	if ok {
+		delete(s.requestCbs, header.ID)
+	}
 	s.requestCbsMutex.Unlock()
 
 	if !ok {
