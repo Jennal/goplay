@@ -32,7 +32,7 @@ func (m *Method) Call(args ...interface{}) []interface{} {
 }
 
 func (m *Method) NewArg(i int) interface{} {
-	t := reflect.TypeOf(m.method)
+	t := m.method.Type()
 	if t.NumIn() <= i {
 		return nil
 	}

@@ -94,6 +94,7 @@ func (s *ServiceClient) setupEventLoop() {
 					log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
 					if err != nil {
 						log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+						client.Disconnect()
 						break
 					}
 
