@@ -83,7 +83,7 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 			header, bodyBuf, err := client.Recv()
 			log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
 			if err != nil {
-				log.Errorf("recv err => %v\t|\theader => %#v\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+				log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
 				break
 			}
 
@@ -103,7 +103,7 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 				// fmt.Printf(" => Loop result: %#v\n", results)
 				err := self.response(sess, header, results)
 				if err != nil {
-					log.Errorf("response err => %v\t|\theader => %#v\results => %#v", err, header, results)
+					log.Errorf("Response:\n\terr => %v\n\theader => %#v\n\tresults => %#v", err, header, results)
 					break
 				}
 			case pkg.PKG_HEARTBEAT: /* Can not come to here */
@@ -111,7 +111,7 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 			case pkg.PKG_HEARTBEAT_RESPONSE: /* Can not come to here */
 				fallthrough
 			default:
-				log.Errorf("can't reach here!!\t|\theader => %#v\n\tbody => %#v\n\terr => %v\n", header, bodyBuf, err)
+				log.Errorf("Can't reach here!!\n\terr => %v\n\theader => %#v\n\tbody => %#v", err, header, bodyBuf)
 				break
 			}
 		}
@@ -126,7 +126,7 @@ func (self *Service) callRouteFunc(sess *session.Session, header *pkg.Header, bo
 	 */
 	method := self.router.Get(header.Route)
 	if method == nil {
-		log.Errorf("can't find method with route: %s", header.Route)
+		log.Errorf("Can't find method with route: %s", header.Route)
 		return nil
 	}
 	val := method.NewArg(2)
