@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jennal/goplay/defaults"
 	"github.com/jennal/goplay/encode"
 	"github.com/jennal/goplay/filter/heartbeat"
 	"github.com/jennal/goplay/helpers"
@@ -36,17 +37,11 @@ type ServiceClient struct {
 	pushCbs      map[string][]*Method
 }
 
-func NewServiceClient(cli transfer.IClient, e pkg.EncodingType) *ServiceClient {
-	encoder := encode.GetEncodeDecoder(e)
-	if encoder == nil {
-		log.Errorf("Can't find Encoder for %v", e)
-		return nil
-	}
-
+func NewServiceClient(cli transfer.IClient) *ServiceClient {
 	result := &ServiceClient{
 		IClient:          cli,
-		encoding:         e,
-		encoder:          encoder,
+		encoding:         defaults.Encoding,
+		encoder:          encode.GetEncodeDecoder(defaults.Encoding),
 		heartBeatManager: heartbeat.NewHeartBeatManager(),
 
 		requestCbs: make(map[pkg.PackageIDType]*requestCallbacks),
@@ -56,6 +51,18 @@ func NewServiceClient(cli transfer.IClient, e pkg.EncodingType) *ServiceClient {
 	result.setupEventLoop()
 
 	return result
+}
+
+func (self *ServiceClient) SetEncoding(e pkg.EncodingType) error {
+	encoder := encode.GetEncodeDecoder(e)
+	if encoder == nil {
+		return log.NewErrorf("Can't find Encoder for %v", e)
+	}
+
+	self.encoding = e
+	self.encoder = encoder
+
+	return nil
 }
 
 func (s *ServiceClient) checkTimeoutLoop() {

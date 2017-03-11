@@ -19,11 +19,11 @@ import (
 )
 
 type Service struct {
+	transfer.IServer
+	router *router.Router
+
 	Name     string
 	Encoding pkg.EncodingType
-
-	server transfer.IServer
-	router *router.Router
 
 	handlers []handler.IHandler
 	filters  []filter.IFilter
@@ -33,7 +33,7 @@ func NewService(name string, serv transfer.IServer) *Service {
 	instance := &Service{
 		Name:     name,
 		Encoding: defaults.Encoding,
-		server:   serv,
+		IServer:  serv,
 		router:   router.NewRouter(name),
 	}
 
