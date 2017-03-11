@@ -11,19 +11,21 @@ import (
 type server struct {
 	*event.Event
 
-	host    string
-	port    int
-	clients []transfer.IClient
+	host      string
+	port      int
+	clients   []transfer.IClient
+	isStarted bool
 
 	listener net.Listener
 }
 
 func NewServer(host string, port int) transfer.IServer {
 	return &server{
-		Event:   event.NewEvent(),
-		host:    host,
-		port:    port,
-		clients: []transfer.IClient{},
+		Event:     event.NewEvent(),
+		host:      host,
+		port:      port,
+		clients:   []transfer.IClient{},
+		isStarted: false,
 	}
 }
 
@@ -46,11 +48,17 @@ func (serv *server) GetClients() []transfer.IClient {
 }
 
 func (serv *server) Start() error {
+	if serv.isStarted {
+		return nil
+	}
+
 	host := fmt.Sprintf("%s:%d", serv.host, serv.port)
 	ln, err := net.Listen("tcp", host)
 	if err != nil {
 		return err
 	}
+
+	serv.isStarted = true
 
 	serv.listener = ln
 	go func() {
@@ -58,6 +66,7 @@ func (serv *server) Start() error {
 			conn, err := ln.Accept()
 			if err != nil {
 				serv.Emit(transfer.EVENT_SERVER_ERROR, err)
+				serv.Stop()
 			}
 
 			client := NewClientWithConnect(conn)
@@ -80,6 +89,11 @@ func (serv *server) Start() error {
 }
 
 func (serv *server) Stop() error {
+	if !serv.isStarted {
+		return nil
+	}
+
 	defer serv.Emit(transfer.EVENT_SERVER_STOPPED)
+	serv.isStarted = false
 	return serv.listener.Close()
 }

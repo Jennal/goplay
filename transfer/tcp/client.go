@@ -14,7 +14,9 @@ import (
 )
 
 var (
-	ERR_ALREADY_CONNECTED = errors.New("already connected")
+	ERR_ALREADY_CONNECTED      = errors.New("already connected")
+	ERR_READ_BEFORE_CONNECTED  = errors.New("read before connected")
+	ERR_WRITE_BEFORE_CONNECTED = errors.New("write before connected")
 )
 
 type client struct {
@@ -78,14 +80,23 @@ func (client *client) Connect(host string, port int) error {
 
 func (client *client) Disconnect() error {
 	defer client.Emit(transfer.EVENT_CLIENT_DISCONNECTED, client)
+	client.isConnected = false
 	return client.conn.Close()
 }
 
 func (client *client) Read(buf []byte) (int, error) {
+	if !client.IsConnected() {
+		return 0, ERR_READ_BEFORE_CONNECTED
+	}
+
 	return client.conn.Read(buf)
 }
 
 func (client *client) Write(buf []byte) (int, error) {
+	if !client.IsConnected() {
+		return 0, ERR_WRITE_BEFORE_CONNECTED
+	}
+
 	return client.conn.Write(buf)
 }
 

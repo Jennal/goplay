@@ -49,15 +49,20 @@ func (self *Handler) OnNewClient(sess *session.Session) {
 }
 
 func (self *Handler) NotifyString(sess *session.Session, line string) *pkg.ErrorMessage {
-	self.t.Log("Handler-Test", sess, line)
+	self.t.Log("Handler-NotifyString", sess, line)
 	assert.Equal(self.t, "string", line)
 	sess.Push("test.pushstring", "Service: "+line)
 	return nil
 }
 
 func (self *Handler) RequestInt(sess *session.Session, n int) (int, *pkg.ErrorMessage) {
-	self.t.Log("Handler-Add", sess, n)
+	self.t.Log("Handler-RequestInt", sess, n)
 	return n + 1, nil
+}
+
+func (self *Handler) RequestString(sess *session.Session, n string) (string, *pkg.ErrorMessage) {
+	self.t.Log("Handler-RequestString", sess, n)
+	return n + "-1", nil
 }
 
 func TestService(t *testing.T) {
@@ -80,7 +85,7 @@ func TestService(t *testing.T) {
 
 	//on push
 	client.AddListener("test.pushstring", func(line string) {
-		t.Log(line)
+		t.Log("[test.pushstring] Recv => ", line)
 		assert.Equal(t, "Service: string", line)
 	})
 
@@ -90,10 +95,21 @@ func TestService(t *testing.T) {
 
 	//request
 	err = client.Request("test.handler.requestint", 100, func(result int) {
+		t.Log("[test.handler.requestint] Recv => ", result)
 		assert.Equal(t, 101, result)
 	}, func(err *pkg.ErrorMessage) {
 		assert.True(t, false, "can't not come to here")
 	})
+	assert.Nil(t, err, "client.Request() error: %v", err)
+
+	err = client.Request("test.handler.requeststring", "100", func(result string) {
+		t.Log("[test.handler.requeststring] Recv => ", result)
+		assert.Equal(t, "100-1", result)
+	}, func(err *pkg.ErrorMessage) {
+		assert.True(t, false, "can't not come to here")
+	})
+	assert.Nil(t, err, "client.Request() error: %v", err)
+
 	time.Sleep(1 * time.Second)
 	err = serv.Stop()
 	assert.Nil(t, err, "serv.Stop() error: %v", err)

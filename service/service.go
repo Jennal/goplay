@@ -1,6 +1,7 @@
 package service
 
 import (
+	"c4m/aop"
 	"fmt"
 
 	"reflect"
@@ -101,6 +102,7 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 
 			if err != nil {
 				log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+				sess.Disconnect()
 				break
 			}
 
@@ -114,13 +116,24 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 			//map to handler
 			switch header.Type {
 			case pkg.PKG_NOTIFY:
-				self.callRouteFunc(sess, header, bodyBuf)
+				_, err := self.callRouteFunc(sess, header, bodyBuf)
+				if err != nil {
+					log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+					sess.Disconnect()
+					break
+				}
 			case pkg.PKG_REQUEST:
-				results := self.callRouteFunc(sess, header, bodyBuf)
+				results, err := self.callRouteFunc(sess, header, bodyBuf)
+				if err != nil {
+					log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+					sess.Disconnect()
+					break
+				}
 				// fmt.Printf(" => Loop result: %#v\n", results)
-				err := self.response(sess, header, results)
+				err = self.response(sess, header, results)
 				if err != nil {
 					log.Errorf("Response:\n\terr => %v\n\theader => %#v\n\tresults => %#v", err, header, results)
+					sess.Disconnect()
 					break
 				}
 			case pkg.PKG_HEARTBEAT: /* Can not come to here */
@@ -129,13 +142,12 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 				fallthrough
 			default:
 				log.Errorf("Can't reach here!!\n\terr => %v\n\theader => %#v\n\tbody => %#v", err, header, bodyBuf)
-				break
 			}
 		}
 	}()
 }
 
-func (self *Service) callRouteFunc(sess *session.Session, header *pkg.Header, bodyBuf []byte) []interface{} {
+func (self *Service) callRouteFunc(sess *session.Session, header *pkg.Header, bodyBuf []byte) ([]interface{}, error) {
 	/*
 	 * 1. find route func
 	 * 2. unmarshal data
@@ -143,19 +155,25 @@ func (self *Service) callRouteFunc(sess *session.Session, header *pkg.Header, bo
 	 */
 	method := self.router.Get(header.Route)
 	if method == nil {
-		log.Errorf("Can't find method with route: %s", header.Route)
-		return nil
+		return nil, log.NewErrorf("Can't find method with route: %s", header.Route)
 	}
 	val := method.NewArg(2)
 	// fmt.Printf("Service.callRouteFunc: %#v => %v\n", val, reflect.TypeOf(val))
 	decoder := encode.GetEncodeDecoder(header.Encoding)
 	err := decoder.Unmarshal(bodyBuf, val)
 	if err != nil {
-		log.Errorf("Service.callRouteFunc decoder.Unmarshal failed: %v", err)
-		return nil
+		return nil, log.NewErrorf("Service.callRouteFunc decoder.Unmarshal failed: %v", err)
 	}
 	// fmt.Printf("Service.callRouteFunc: %#v => %v\n", val, reflect.TypeOf(val))
-	return method.Call(sess, helpers.GetValueFromPtr(val))
+
+	var result []interface{}
+	aop.Recover(func() {
+		result = method.Call(sess, helpers.GetValueFromPtr(val))
+	}, func(e interface{}) {
+		err = e.(error)
+	})
+
+	return result, err
 }
 
 func (self *Service) response(sess *session.Session, header *pkg.Header, results []interface{}) error {
