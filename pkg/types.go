@@ -4,6 +4,8 @@ type Status int16
 
 const (
 	STAT_OK Status = iota
+	STAT_ERR_WRONG_PARAMS
+	STAT_ERR_DECODE_FAILED
 	STAT_ERR_TIMEOUT
 )
 

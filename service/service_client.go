@@ -4,6 +4,8 @@ import (
 	"sync"
 	"time"
 
+	"fmt"
+
 	"github.com/jennal/goplay/defaults"
 	"github.com/jennal/goplay/encode"
 	"github.com/jennal/goplay/filter/heartbeat"
@@ -161,8 +163,22 @@ func (s *ServiceClient) recvResponse(header *pkg.Header, body []byte) {
 	}
 
 	val := cbs.successCallbak.NewArg(0)
-	s.encoder.Unmarshal(body, val)
-	cbs.successCallbak.Call(helpers.GetValueFromPtr(val))
+	err := s.encoder.Unmarshal(body, val)
+	if err == nil {
+		cbs.successCallbak.Call(helpers.GetValueFromPtr(val))
+		return
+	}
+
+	val = cbs.failCallback.NewArg(0)
+	err = s.encoder.Unmarshal(body, val)
+	if err == nil {
+		cbs.failCallback.Call(helpers.GetValueFromPtr(val))
+		return
+	}
+
+	cbs.failCallback.Call(pkg.NewErrorMessage(
+		pkg.STAT_ERR_DECODE_FAILED,
+		fmt.Sprintf("decode body failed: %#v | %v", body, string(body))))
 }
 
 func (s *ServiceClient) Request(route string, data interface{}, succCb interface{}, failCb func(*pkg.ErrorMessage)) error {

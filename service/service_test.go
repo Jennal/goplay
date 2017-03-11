@@ -65,6 +65,16 @@ func (self *Handler) RequestString(sess *session.Session, n string) (string, *pk
 	return n + "-1", nil
 }
 
+func (self *Handler) RequestArray(sess *session.Session, n []string) ([]string, *pkg.ErrorMessage) {
+	self.t.Log("Handler-RequestArray", sess, n)
+	return append(n, "Hello to Client"), nil
+}
+
+func (self *Handler) RequestFail(sess *session.Session, n int) (int, *pkg.ErrorMessage) {
+	self.t.Log("Handler-RequestFail", sess, n)
+	return 0, pkg.NewErrorMessage(pkg.STAT_ERR_WRONG_PARAMS, "Test Error")
+}
+
 func TestService(t *testing.T) {
 	ser := tcp.NewServer("", PORT)
 	serv := NewService("test", ser)
@@ -94,6 +104,7 @@ func TestService(t *testing.T) {
 	assert.Nil(t, err, "client.Notify() error: %v", err)
 
 	//request
+	//int
 	err = client.Request("test.handler.requestint", 100, func(result int) {
 		t.Log("[test.handler.requestint] Recv => ", result)
 		assert.Equal(t, 101, result)
@@ -102,11 +113,30 @@ func TestService(t *testing.T) {
 	})
 	assert.Nil(t, err, "client.Request() error: %v", err)
 
+	//string
 	err = client.Request("test.handler.requeststring", "100", func(result string) {
 		t.Log("[test.handler.requeststring] Recv => ", result)
 		assert.Equal(t, "100-1", result)
 	}, func(err *pkg.ErrorMessage) {
 		assert.True(t, false, "can't not come to here")
+	})
+	assert.Nil(t, err, "client.Request() error: %v", err)
+
+	//array
+	err = client.Request("test.handler.requestarray", []string{"Hello to Service"}, func(result []string) {
+		t.Log("[test.handler.requestarray] Recv => ", result)
+		assert.Equal(t, []string{"Hello to Service", "Hello to Client"}, result)
+	}, func(err *pkg.ErrorMessage) {
+		assert.True(t, false, "can't not come to here")
+	})
+	assert.Nil(t, err, "client.Request() error: %v", err)
+
+	//error
+	err = client.Request("test.handler.requestfail", 0, func(result int) {
+		assert.True(t, false, "can't not come to here")
+	}, func(err *pkg.ErrorMessage) {
+		t.Log("Recv Error:", err)
+		assert.Equal(t, pkg.NewErrorMessage(pkg.STAT_ERR_WRONG_PARAMS, "Test Error"), err)
 	})
 	assert.Nil(t, err, "client.Request() error: %v", err)
 
