@@ -70,6 +70,12 @@ func (self *Handler) RequestArray(sess *session.Session, n []string) ([]string, 
 	return append(n, "Hello to Client"), nil
 }
 
+func (self *Handler) RequestMap(sess *session.Session, n map[string]int) (map[string]int, *pkg.ErrorMessage) {
+	self.t.Log("Handler-RequestMap", sess, n)
+	n["Hi Client"] = 100
+	return n, nil
+}
+
 func (self *Handler) RequestFail(sess *session.Session, n int) (int, *pkg.ErrorMessage) {
 	self.t.Log("Handler-RequestFail", sess, n)
 	return 0, pkg.NewErrorMessage(pkg.STAT_ERR_WRONG_PARAMS, "Test Error")
@@ -126,6 +132,20 @@ func TestService(t *testing.T) {
 	err = client.Request("test.handler.requestarray", []string{"Hello to Service"}, func(result []string) {
 		t.Log("[test.handler.requestarray] Recv => ", result)
 		assert.Equal(t, []string{"Hello to Service", "Hello to Client"}, result)
+	}, func(err *pkg.ErrorMessage) {
+		assert.True(t, false, "can't not come to here")
+	})
+	assert.Nil(t, err, "client.Request() error: %v", err)
+
+	//map
+	err = client.Request("test.handler.requestmap", map[string]int{
+		"Hello to Service": 10,
+	}, func(result map[string]int) {
+		t.Log("[test.handler.requestmap] Recv => ", result)
+		assert.Equal(t, map[string]int{
+			"Hello to Service": 10,
+			"Hi Client":        100,
+		}, result)
 	}, func(err *pkg.ErrorMessage) {
 		assert.True(t, false, "can't not come to here")
 	})
