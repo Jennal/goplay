@@ -2,7 +2,6 @@ package service
 
 import (
 	"testing"
-
 	"time"
 
 	"github.com/jennal/goplay/defaults"
@@ -16,6 +15,10 @@ const (
 	PORT     = 9000
 	Encoding = defaults.Encoding
 )
+
+type CustomMessage struct {
+	Name string
+}
 
 type Handler struct {
 	t           *testing.T
@@ -73,6 +76,12 @@ func (self *Handler) RequestArray(sess *session.Session, n []string) ([]string, 
 func (self *Handler) RequestMap(sess *session.Session, n map[string]int) (map[string]int, *pkg.ErrorMessage) {
 	self.t.Log("Handler-RequestMap", sess, n)
 	n["Hi Client"] = 100
+	return n, nil
+}
+
+func (self *Handler) RequestObj(sess *session.Session, n CustomMessage) (CustomMessage, *pkg.ErrorMessage) {
+	self.t.Log("Handler-RequestObj", sess, n)
+	n.Name = "From Service"
 	return n, nil
 }
 
@@ -145,6 +154,19 @@ func TestService(t *testing.T) {
 		assert.Equal(t, map[string]int{
 			"Hello to Service": 10,
 			"Hi Client":        100,
+		}, result)
+	}, func(err *pkg.ErrorMessage) {
+		assert.True(t, false, "can't not come to here")
+	})
+	assert.Nil(t, err, "client.Request() error: %v", err)
+
+	//object
+	err = client.Request("test.handler.requestobj", CustomMessage{
+		Name: "Hello to Service",
+	}, func(result CustomMessage) {
+		t.Log("[test.handler.requestobj] Recv => ", result)
+		assert.Equal(t, CustomMessage{
+			Name: "From Service",
 		}, result)
 	}, func(err *pkg.ErrorMessage) {
 		assert.True(t, false, "can't not come to here")

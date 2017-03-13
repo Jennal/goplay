@@ -76,6 +76,7 @@ func isValidMethod(m reflect.Method) bool {
 	/*
 	 * valid method:
 	 * func (*handler.IHandler) Method(*session.Session, interface{}) (interface{}, *pkg.ErrorMessage)
+	 * interface of In(2) and Out(0) should not be reflect.Ptr
 	 */
 
 	/* Args: *handler.IHandler, *session.Session, interface{} */
@@ -85,7 +86,7 @@ func isValidMethod(m reflect.Method) bool {
 	}
 
 	/* Returns: interface{}, *pkg.ErrorMessage */
-	if m.Type.NumOut() > 2 {
+	if m.Type.NumOut() != 1 && m.Type.NumOut() != 2 {
 		// fmt.Println("isValidMethod-2")
 		return false
 	}
@@ -101,18 +102,28 @@ func isValidMethod(m reflect.Method) bool {
 		return false
 	}
 
+	if m.Type.In(2).Kind() == reflect.Ptr {
+		// fmt.Println("isValidMethod-5")
+		return false
+	}
+
 	/* valid return */
 	if m.Type.NumOut() == 1 {
 		if retType := m.Type.Out(0); retType != TYPE_ERROR {
-			// fmt.Println("isValidMethod-5")
+			// fmt.Println("isValidMethod-6")
 			return false
 		}
 
 		return true
 	}
 
+	if m.Type.Out(0).Kind() == reflect.Ptr {
+		// fmt.Println("isValidMethod-7")
+		return false
+	}
+
 	if retType := m.Type.Out(1); retType != TYPE_ERROR {
-		// fmt.Println("isValidMethod-6")
+		// fmt.Println("isValidMethod-8")
 		return false
 	}
 
