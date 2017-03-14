@@ -125,13 +125,13 @@ func UnmarshalHeader(data []byte, header *Header) (int, error) {
 	}
 	header.Status = Status(b)
 
-	size, err := helpers.ToUInt16(data[3:HEADER_STATIC_SIZE])
+	size, err := helpers.ToUInt16(data[HEADER_STATIC_SIZE-2 : HEADER_STATIC_SIZE])
 	if err != nil {
 		return 0, err
 	}
 	header.ContentSize = PackageSizeType(size)
 
-	for i := 3; i < HEADER_STATIC_SIZE; i++ {
+	for i := HEADER_STATIC_SIZE - 2; i < HEADER_STATIC_SIZE; i++ {
 		buffer.ReadByte()
 	}
 	b, err = buffer.ReadByte()

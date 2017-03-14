@@ -5,9 +5,9 @@
 //
 // http://opensource.org/licenses/MIT
 //
-// Unless required by applicable law or agreed to in writing, software distributed 
-// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
 package tcp
@@ -70,7 +70,7 @@ func (client *client) UnregistDelegate(delegate transfer.IClientDelegate) {
 }
 
 func (client *client) IsConnected() bool {
-	return client.isConnected
+	return client.conn != nil && client.isConnected
 }
 
 func (client *client) Connect(host string, port int) error {
@@ -91,6 +91,10 @@ func (client *client) Connect(host string, port int) error {
 }
 
 func (client *client) Disconnect() error {
+	if !client.IsConnected() {
+		return nil
+	}
+
 	defer client.Emit(transfer.EVENT_CLIENT_DISCONNECTED, client)
 	client.isConnected = false
 	return client.conn.Close()

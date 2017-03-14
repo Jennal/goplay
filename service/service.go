@@ -107,57 +107,67 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 	}
 
 	go func() {
-		for {
-		NextLoop:
-			header, bodyBuf, err := client.Recv()
-			if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
-				log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
+		aop.Recover(func() {
+			for {
+			NextLoop:
+				header, bodyBuf, err := client.Recv()
+				if err != nil {
+					log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+					sess.Disconnect()
+					break
+				}
+
+				if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
+					log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
+				}
+
+				//filters
+				for _, filter := range self.filters {
+					if !filter.OnRecv(sess, header, bodyBuf) {
+						goto NextLoop
+					}
+				}
+
+				//map to handler
+				switch header.Type {
+				case pkg.PKG_NOTIFY:
+					_, err := self.callRouteFunc(sess, header, bodyBuf)
+					if err != nil {
+						log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+						sess.Disconnect()
+						break
+					}
+				case pkg.PKG_REQUEST:
+					results, err := self.callRouteFunc(sess, header, bodyBuf)
+					if err != nil {
+						log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+						sess.Disconnect()
+						break
+					}
+					// fmt.Printf(" => Loop result: %#v\n", results)
+					err = self.response(sess, header, results)
+					if err != nil {
+						log.Errorf("Response:\n\terr => %v\n\theader => %#v\n\tresults => %#v", err, header, results)
+						sess.Disconnect()
+						break
+					}
+				case pkg.PKG_HEARTBEAT: /* Can not come to here */
+					fallthrough
+				case pkg.PKG_HEARTBEAT_RESPONSE: /* Can not come to here */
+					fallthrough
+				default:
+					log.Errorf("Can't reach here!!\n\terr => %v\n\theader => %#v\n\tbody => %#v", err, header, bodyBuf)
+				}
+			}
+		}, func(err interface{}) {
+			if err != nil && err.(error) != nil {
+				log.Error(err.(error))
 			}
 
-			if err != nil {
-				log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+			if sess.IsConnected() {
 				sess.Disconnect()
-				break
 			}
-
-			//filters
-			for _, filter := range self.filters {
-				if !filter.OnRecv(sess, header, bodyBuf) {
-					goto NextLoop
-				}
-			}
-
-			//map to handler
-			switch header.Type {
-			case pkg.PKG_NOTIFY:
-				_, err := self.callRouteFunc(sess, header, bodyBuf)
-				if err != nil {
-					log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
-					sess.Disconnect()
-					break
-				}
-			case pkg.PKG_REQUEST:
-				results, err := self.callRouteFunc(sess, header, bodyBuf)
-				if err != nil {
-					log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
-					sess.Disconnect()
-					break
-				}
-				// fmt.Printf(" => Loop result: %#v\n", results)
-				err = self.response(sess, header, results)
-				if err != nil {
-					log.Errorf("Response:\n\terr => %v\n\theader => %#v\n\tresults => %#v", err, header, results)
-					sess.Disconnect()
-					break
-				}
-			case pkg.PKG_HEARTBEAT: /* Can not come to here */
-				fallthrough
-			case pkg.PKG_HEARTBEAT_RESPONSE: /* Can not come to here */
-				fallthrough
-			default:
-				log.Errorf("Can't reach here!!\n\terr => %v\n\theader => %#v\n\tbody => %#v", err, header, bodyBuf)
-			}
-		}
+		})
 	}()
 }
 
@@ -201,7 +211,7 @@ func (self *Service) response(sess *session.Session, header *pkg.Header, results
 	result := results[0]
 	/* check error != nil */
 	if len(results) == 2 && !reflect.ValueOf(results[1]).IsNil() {
-		header.Status = pkg.STAT_ERR
+		respHeader.Status = pkg.STAT_ERR
 		result = results[1]
 	}
 

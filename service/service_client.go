@@ -174,6 +174,7 @@ func (s *ServiceClient) recvResponse(header *pkg.Header, body []byte) {
 		return
 	}
 
+	// log.Logf("%v %v %v", header.Status, body, string(body))
 	if header.Status == pkg.STAT_OK {
 		val := cbs.successCallbak.NewArg(0)
 		err := s.encoder.Unmarshal(body, val)
