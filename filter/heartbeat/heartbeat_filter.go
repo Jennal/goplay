@@ -5,9 +5,9 @@
 //
 // http://opensource.org/licenses/MIT
 //
-// Unless required by applicable law or agreed to in writing, software distributed 
-// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
 package heartbeat
@@ -77,6 +77,7 @@ func (self *HeartBeatProcessor) popTime(id pkg.PackageIDType) *time.Time {
 }
 
 func (self *HeartBeatProcessor) checkTimeOut() {
+	//FIXME: this will lead to memory leak
 	for {
 		// fmt.Printf("[%v] Check Timeout\n", time.Now())
 		ids := []pkg.PackageIDType{}
