@@ -2,9 +2,9 @@
 
 GoPlay is a framework for game service, written by pure golang.
 
-# GoPlay-Client-Cpp
+# Clients
 
-[GoPlay-Client-Cpp](https://github.com/Jennal/goplay-client-cpp) is a C++ client for GoPlay.
+- C++: [GoPlay-Client-Cpp](https://github.com/Jennal/goplay-client-cpp)
 
 # The MIT License
 
