@@ -5,9 +5,9 @@
 //
 // http://opensource.org/licenses/MIT
 //
-// Unless required by applicable law or agreed to in writing, software distributed 
-// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
 package pkg
@@ -20,12 +20,13 @@ import (
 	"github.com/jennal/goplay/log"
 )
 
-const HEADER_STATIC_SIZE = 5
+const HEADER_STATIC_SIZE = 6
 
 type Header struct {
 	Type        PackageType
 	Encoding    EncodingType
 	ID          PackageIDType
+	Status      Status
 	ContentSize PackageSizeType
 	Route       string
 }
@@ -35,6 +36,7 @@ func NewHeader(t PackageType, e EncodingType, idGen *IDGen, r string) *Header {
 		Type:        t,
 		Encoding:    e,
 		ID:          idGen.NextID(),
+		Status:      STAT_OK,
 		ContentSize: 0,
 		Route:       r,
 	}
@@ -50,9 +52,14 @@ func (self *Header) Marshal() ([]byte, error) {
 		byte(self.Type),
 		byte(self.Encoding),
 		byte(self.ID),
+		byte(self.Status),
 	})
 	buf, err := helpers.GetBytes(self.ContentSize)
+	if err != nil {
+		return nil, err
+	}
 	buffer.Write(buf)
+
 	buffer.WriteByte(byte(len(self.Route)))
 	buffer.Write([]byte(self.Route))
 
@@ -84,41 +91,63 @@ func ReadHeader(reader io.Reader, header *Header) (int, error) {
 		buffer = append(buffer, routeBuf...)
 	}
 
-	_, err = UnmarshalHeader(buffer, header)
-	// fmt.Println(header)
-	if err != nil {
-		return 0, err
-	}
-
-	return 0, nil
+	return UnmarshalHeader(buffer, header)
 }
 
 func UnmarshalHeader(data []byte, header *Header) (int, error) {
 	if len(data) < HEADER_STATIC_SIZE {
-		return -1, log.NewError("data size < HEADER_STATIC_SIZE")
+		return 0, log.NewError("data size < HEADER_STATIC_SIZE")
 	}
 
 	buffer := bytes.NewBuffer(data)
 
 	b, err := buffer.ReadByte()
+	if err != nil {
+		return 0, err
+	}
 	header.Type = PackageType(b)
+
 	b, err = buffer.ReadByte()
+	if err != nil {
+		return 0, err
+	}
 	header.Encoding = EncodingType(b)
+
 	b, err = buffer.ReadByte()
+	if err != nil {
+		return 0, err
+	}
 	header.ID = PackageIDType(b)
 
+	b, err = buffer.ReadByte()
+	if err != nil {
+		return 0, err
+	}
+	header.Status = Status(b)
+
 	size, err := helpers.ToUInt16(data[3:HEADER_STATIC_SIZE])
+	if err != nil {
+		return 0, err
+	}
 	header.ContentSize = PackageSizeType(size)
+
 	for i := 3; i < HEADER_STATIC_SIZE; i++ {
 		buffer.ReadByte()
 	}
 	b, err = buffer.ReadByte()
+	if err != nil {
+		return 0, err
+	}
 	routeSize := int(b)
+
 	if routeSize > 0 {
 		route := make([]byte, b)
 		_, err = buffer.Read(route)
+		if err != nil {
+			return 0, err
+		}
 		header.Route = string(route)
 	}
 
-	return HEADER_STATIC_SIZE + 1 + routeSize, err
+	return HEADER_STATIC_SIZE + 1 + routeSize, nil
 }

@@ -5,9 +5,9 @@
 //
 // http://opensource.org/licenses/MIT
 //
-// Unless required by applicable law or agreed to in writing, software distributed 
-// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
 package service
@@ -174,18 +174,20 @@ func (s *ServiceClient) recvResponse(header *pkg.Header, body []byte) {
 		return
 	}
 
-	val := cbs.successCallbak.NewArg(0)
-	err := s.encoder.Unmarshal(body, val)
-	if err == nil {
-		cbs.successCallbak.Call(helpers.GetValueFromPtr(val))
-		return
-	}
-
-	val = cbs.failCallback.NewArg(0)
-	err = s.encoder.Unmarshal(body, val)
-	if err == nil {
-		cbs.failCallback.Call(helpers.GetValueFromPtr(val))
-		return
+	if header.Status == pkg.STAT_OK {
+		val := cbs.successCallbak.NewArg(0)
+		err := s.encoder.Unmarshal(body, val)
+		if err == nil {
+			cbs.successCallbak.Call(helpers.GetValueFromPtr(val))
+			return
+		}
+	} else {
+		val := cbs.failCallback.NewArg(0)
+		err := s.encoder.Unmarshal(body, val)
+		if err == nil {
+			cbs.failCallback.Call(helpers.GetValueFromPtr(val))
+			return
+		}
 	}
 
 	cbs.failCallback.Call(pkg.NewErrorMessage(

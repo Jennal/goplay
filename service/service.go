@@ -5,9 +5,9 @@
 //
 // http://opensource.org/licenses/MIT
 //
-// Unless required by applicable law or agreed to in writing, software distributed 
-// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
 package service
@@ -198,6 +198,7 @@ func (self *Service) response(sess *session.Session, header *pkg.Header, results
 	result := results[0]
 	/* check error != nil */
 	if len(results) == 2 && !reflect.ValueOf(results[1]).IsNil() {
+		header.Status = pkg.STAT_ERR
 		result = results[1]
 	}
 
