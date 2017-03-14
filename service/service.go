@@ -79,15 +79,18 @@ func (self *Service) OnStarted() {
 		handler.OnStarted()
 	}
 }
+
 func (self *Service) OnError(err error) {
 	fmt.Println("OnError", err)
 }
+
 func (self *Service) OnStopped() {
 	fmt.Println("OnStopped")
 	for _, handler := range self.handlers {
 		handler.OnStopped()
 	}
 }
+
 func (self *Service) OnNewClient(client transfer.IClient) {
 	fmt.Println("OnNewClient", client)
 	sess := session.NewSession(client)
