@@ -5,9 +5,9 @@
 //
 // http://opensource.org/licenses/MIT
 //
-// Unless required by applicable law or agreed to in writing, software distributed 
-// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
 package service
@@ -120,10 +120,13 @@ func TestService(t *testing.T) {
 	err = client.Connect("", PORT)
 	assert.Nil(t, err, "servive.Start() error: %v", err)
 
+	callIn := make(map[string]bool, 0)
+
 	//on push
 	client.AddListener("test.pushstring", func(line string) {
 		t.Log("[test.pushstring] Recv => ", line)
 		assert.Equal(t, "Service: string", line)
+		callIn["test.pushstring"] = true
 	})
 
 	//notify
@@ -135,6 +138,7 @@ func TestService(t *testing.T) {
 	err = client.Request("test.handler.requestint", 100, func(result int) {
 		t.Log("[test.handler.requestint] Recv => ", result)
 		assert.Equal(t, 101, result)
+		callIn["test.handler.requestint"] = true
 	}, func(err *pkg.ErrorMessage) {
 		assert.True(t, false, "can't not come to here")
 	})
@@ -144,6 +148,7 @@ func TestService(t *testing.T) {
 	err = client.Request("test.handler.requeststring", "100", func(result string) {
 		t.Log("[test.handler.requeststring] Recv => ", result)
 		assert.Equal(t, "100-1", result)
+		callIn["test.handler.requeststring"] = true
 	}, func(err *pkg.ErrorMessage) {
 		assert.True(t, false, "can't not come to here")
 	})
@@ -153,6 +158,7 @@ func TestService(t *testing.T) {
 	err = client.Request("test.handler.requestarray", []string{"Hello to Service"}, func(result []string) {
 		t.Log("[test.handler.requestarray] Recv => ", result)
 		assert.Equal(t, []string{"Hello to Service", "Hello to Client"}, result)
+		callIn["test.handler.requestarray"] = true
 	}, func(err *pkg.ErrorMessage) {
 		assert.True(t, false, "can't not come to here")
 	})
@@ -167,6 +173,7 @@ func TestService(t *testing.T) {
 			"Hello to Service": 10,
 			"Hi Client":        100,
 		}, result)
+		callIn["test.handler.requestmap"] = true
 	}, func(err *pkg.ErrorMessage) {
 		assert.True(t, false, "can't not come to here")
 	})
@@ -180,6 +187,7 @@ func TestService(t *testing.T) {
 		assert.Equal(t, CustomMessage{
 			Name: "From Service",
 		}, result)
+		callIn["test.handler.requestobj"] = true
 	}, func(err *pkg.ErrorMessage) {
 		assert.True(t, false, "can't not come to here")
 	})
@@ -191,6 +199,7 @@ func TestService(t *testing.T) {
 	}, func(err *pkg.ErrorMessage) {
 		t.Log("Recv Error:", err)
 		assert.Equal(t, pkg.NewErrorMessage(pkg.STAT_ERR_WRONG_PARAMS, "Test Error"), err)
+		callIn["test.handler.requestfail"] = true
 	})
 	assert.Nil(t, err, "client.Request() error: %v", err)
 
@@ -200,4 +209,14 @@ func TestService(t *testing.T) {
 
 	assert.Equal(t, true, handler.Started)
 	assert.Equal(t, true, handler.Stopped)
+
+	assert.Equal(t, map[string]bool{
+		"test.pushstring":            true,
+		"test.handler.requestint":    true,
+		"test.handler.requeststring": true,
+		"test.handler.requestarray":  true,
+		"test.handler.requestmap":    true,
+		"test.handler.requestobj":    true,
+		"test.handler.requestfail":   true,
+	}, callIn)
 }
