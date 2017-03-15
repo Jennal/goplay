@@ -5,9 +5,9 @@
 //
 // http://opensource.org/licenses/MIT
 //
-// Unless required by applicable law or agreed to in writing, software distributed 
-// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
 package heartbeat
@@ -45,7 +45,8 @@ func (self *HeartBeatManager) OnNewClient(sess *session.Session) bool /* return 
 		self.Lock()
 		defer self.Unlock()
 
-		if _, ok := self.items[sess]; ok {
+		if processor, ok := self.items[sess]; ok {
+			processor.Stop()
 			delete(self.items, sess)
 		}
 	})
@@ -54,7 +55,7 @@ func (self *HeartBeatManager) OnNewClient(sess *session.Session) bool /* return 
 	defer self.Unlock()
 
 	f := NewHeartBeatProcessor(self)
-	f.OnNewClient(sess)
+	f.SetClient(sess)
 	self.items[sess] = f
 
 	return true

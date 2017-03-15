@@ -20,7 +20,6 @@ import (
 	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/session"
-	"github.com/jennal/goplay/transfer"
 )
 
 const (
@@ -44,6 +43,8 @@ type HeartBeatProcessor struct {
 	sendCount    int64
 	recvCount    int64
 	timeoutCount int
+
+	stopSignal bool
 }
 
 func NewHeartBeatProcessor(manager *HeartBeatManager) *HeartBeatProcessor {
@@ -54,6 +55,10 @@ func NewHeartBeatProcessor(manager *HeartBeatManager) *HeartBeatProcessor {
 	go result.checkTimeOut()
 
 	return result
+}
+
+func (self *HeartBeatProcessor) Stop() {
+	self.stopSignal = true
 }
 
 func (self *HeartBeatProcessor) pushTime(id pkg.PackageIDType, t time.Time) {
@@ -77,8 +82,11 @@ func (self *HeartBeatProcessor) popTime(id pkg.PackageIDType) *time.Time {
 }
 
 func (self *HeartBeatProcessor) checkTimeOut() {
-	//FIXME: this will lead to memory leak
 	for {
+		if self.stopSignal {
+			break
+		}
+
 		// fmt.Printf("[%v] Check Timeout\n", time.Now())
 		ids := []pkg.PackageIDType{}
 		now := time.Now()
@@ -123,36 +131,29 @@ func (self *HeartBeatProcessor) resetTimeOut() {
 	// fmt.Println("Reset timeOut:", self.sess, self.timeoutCount, MAX_TIMEOUT)
 }
 
-func (self *HeartBeatProcessor) New(sess *session.Session) *pkg.Header {
+func (self *HeartBeatProcessor) newHeader(sess *session.Session) *pkg.Header {
 	h := sess.NewHeartBeatHeader()
 	self.pushTime(h.ID, time.Now())
 	return h
 }
 
-func (self *HeartBeatProcessor) OnNewClient(sess *session.Session) bool /* return false to ignore */ {
+func (self *HeartBeatProcessor) SetClient(sess *session.Session) bool /* return false to ignore */ {
 	self.sess = sess
-	exitSign := make(chan int)
-
-	sess.On(transfer.EVENT_CLIENT_DISCONNECTED, self, func(cli transfer.IClient) {
-		// fmt.Println("HeartBeatProcessor-Client-Disconnected", sess)
-		exitSign <- 1
-	})
 
 	go func() {
 		for {
-			select {
-			case <-exitSign:
-				return
-			default:
-				if err := sess.Send(self.New(sess), []byte{}); err == nil {
-					self.sendCount++
-					self.manager.incSendCount()
-				} else {
-					self.incTimeOut()
-				}
-
-				time.Sleep(INTERNAL)
+			if self.stopSignal {
+				break
 			}
+
+			if err := sess.Send(self.newHeader(sess), []byte{}); err == nil {
+				self.sendCount++
+				self.manager.incSendCount()
+			} else {
+				self.incTimeOut()
+			}
+
+			time.Sleep(INTERNAL)
 		}
 	}()
 
