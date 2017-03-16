@@ -5,17 +5,25 @@
 //
 // http://opensource.org/licenses/MIT
 //
-// Unless required by applicable law or agreed to in writing, software distributed 
-// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
+//Package data is a thread safe memory storage of data
 package data
 
+import (
+	"sync"
+)
+
+//Map is a key value storage, key should be string, value can be any type
 type Map struct {
-	data map[string]interface{}
+	mutex sync.Mutex
+	data  map[string]interface{}
 }
 
+//NewMap creates new Map struct
 func NewMap() *Map {
 	return &Map{
 		data: make(map[string]interface{}),
@@ -23,19 +31,31 @@ func NewMap() *Map {
 }
 
 func (s *Map) Remove(key string) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	delete(s.data, key)
 }
 
 func (s *Map) Set(key string, value interface{}) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	s.data[key] = value
 }
 
 func (s *Map) HasKey(key string) bool {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	_, has := s.data[key]
 	return has
 }
 
 func (s *Map) Int(key string) int {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	v, ok := s.data[key]
 	if !ok {
 		return 0
@@ -49,6 +69,9 @@ func (s *Map) Int(key string) int {
 }
 
 func (s *Map) Int8(key string) int8 {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	v, ok := s.data[key]
 	if !ok {
 		return 0
@@ -62,6 +85,9 @@ func (s *Map) Int8(key string) int8 {
 }
 
 func (s *Map) Int16(key string) int16 {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	v, ok := s.data[key]
 	if !ok {
 		return 0
@@ -75,6 +101,9 @@ func (s *Map) Int16(key string) int16 {
 }
 
 func (s *Map) Int32(key string) int32 {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	v, ok := s.data[key]
 	if !ok {
 		return 0
@@ -88,6 +117,9 @@ func (s *Map) Int32(key string) int32 {
 }
 
 func (s *Map) Int64(key string) int64 {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	v, ok := s.data[key]
 	if !ok {
 		return 0
@@ -101,6 +133,9 @@ func (s *Map) Int64(key string) int64 {
 }
 
 func (s *Map) Uint(key string) uint {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	v, ok := s.data[key]
 	if !ok {
 		return 0
@@ -114,6 +149,9 @@ func (s *Map) Uint(key string) uint {
 }
 
 func (s *Map) Uint8(key string) uint8 {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	v, ok := s.data[key]
 	if !ok {
 		return 0
@@ -127,6 +165,9 @@ func (s *Map) Uint8(key string) uint8 {
 }
 
 func (s *Map) Uint16(key string) uint16 {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	v, ok := s.data[key]
 	if !ok {
 		return 0
@@ -140,6 +181,9 @@ func (s *Map) Uint16(key string) uint16 {
 }
 
 func (s *Map) Uint32(key string) uint32 {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	v, ok := s.data[key]
 	if !ok {
 		return 0
@@ -153,6 +197,9 @@ func (s *Map) Uint32(key string) uint32 {
 }
 
 func (s *Map) Uint64(key string) uint64 {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	v, ok := s.data[key]
 	if !ok {
 		return 0
@@ -166,6 +213,9 @@ func (s *Map) Uint64(key string) uint64 {
 }
 
 func (s *Map) Float32(key string) float32 {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	v, ok := s.data[key]
 	if !ok {
 		return 0
@@ -179,6 +229,9 @@ func (s *Map) Float32(key string) float32 {
 }
 
 func (s *Map) Float64(key string) float64 {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	v, ok := s.data[key]
 	if !ok {
 		return 0
@@ -192,6 +245,9 @@ func (s *Map) Float64(key string) float64 {
 }
 
 func (s *Map) String(key string) string {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	v, ok := s.data[key]
 	if !ok {
 		return ""
@@ -205,15 +261,24 @@ func (s *Map) String(key string) string {
 }
 
 func (s *Map) Value(key string) interface{} {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	return s.data[key]
 }
 
 // Retrieve all Map state
 func (s *Map) State() map[string]interface{} {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	return s.data
 }
 
 // Restore Map state after reconnect
 func (s *Map) Restore(data map[string]interface{}) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	s.data = data
 }
