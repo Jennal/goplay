@@ -130,14 +130,14 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 
 				//map to handler
 				switch header.Type {
-				case pkg.PKG_NOTIFY:
+				case pkg.PKG_NOTIFY, pkg.PKG_RPC_NOTIFY:
 					_, err := self.callRouteFunc(sess, header, bodyBuf)
 					if err != nil {
 						log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
 						sess.Disconnect()
 						break
 					}
-				case pkg.PKG_REQUEST:
+				case pkg.PKG_REQUEST, pkg.PKG_RPC_REQUEST:
 					results, err := self.callRouteFunc(sess, header, bodyBuf)
 					if err != nil {
 						log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
@@ -151,9 +151,7 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 						sess.Disconnect()
 						break
 					}
-				case pkg.PKG_HEARTBEAT: /* Can not come to here */
-					fallthrough
-				case pkg.PKG_HEARTBEAT_RESPONSE: /* Can not come to here */
+				case pkg.PKG_HEARTBEAT, pkg.PKG_HEARTBEAT_RESPONSE: /* Can not come to here */
 					fallthrough
 				default:
 					log.Errorf("Can't reach here!!\n\terr => %v\n\theader => %#v\n\tbody => %#v", err, header, bodyBuf)
@@ -202,7 +200,11 @@ func (self *Service) callRouteFunc(sess *session.Session, header *pkg.Header, bo
 
 func (self *Service) response(sess *session.Session, header *pkg.Header, results []interface{}) error {
 	respHeader := *header
-	respHeader.Type = pkg.PKG_RESPONSE
+	if header.Type == pkg.PKG_RPC_REQUEST {
+		respHeader.Type = pkg.PKG_RPC_RESPONSE
+	} else {
+		respHeader.Type = pkg.PKG_RESPONSE
+	}
 
 	if results == nil || len(results) <= 0 {
 		return sess.Send(&respHeader, []byte{})

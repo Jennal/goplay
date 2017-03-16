@@ -123,9 +123,9 @@ func (s *ServiceClient) setupEventLoop() {
 					}
 
 					switch header.Type {
-					case pkg.PKG_NOTIFY:
+					case pkg.PKG_NOTIFY, pkg.PKG_RPC_NOTIFY:
 						s.recvPush(header, bodyBuf)
-					case pkg.PKG_RESPONSE:
+					case pkg.PKG_RESPONSE, pkg.PKG_RPC_RESPONSE:
 						s.recvResponse(header, bodyBuf)
 					case pkg.PKG_HEARTBEAT:
 						s.heartBeatManager.OnRecv(sess, header, bodyBuf)
@@ -197,7 +197,7 @@ func (s *ServiceClient) recvResponse(header *pkg.Header, body []byte) {
 }
 
 func (s *ServiceClient) Request(route string, data interface{}, succCb interface{}, failCb func(*pkg.ErrorMessage)) error {
-	header := s.NewHeader(pkg.PKG_REQUEST, s.encoding, route)
+	header := s.NewHeader(pkg.PKG_RPC_REQUEST, s.encoding, route)
 	cbs := requestCallbacks{
 		successCallbak: NewMethod(succCb),
 		failCallback:   NewMethod(failCb),
@@ -216,7 +216,7 @@ func (s *ServiceClient) Request(route string, data interface{}, succCb interface
 }
 
 func (s *ServiceClient) Notify(route string, data interface{}) error {
-	header := s.NewHeader(pkg.PKG_NOTIFY, s.encoding, route)
+	header := s.NewHeader(pkg.PKG_RPC_NOTIFY, s.encoding, route)
 	buf, err := s.encoder.Marshal(data)
 	if err != nil {
 		return err
