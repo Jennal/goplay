@@ -5,18 +5,31 @@
 //
 // http://opensource.org/licenses/MIT
 //
-// Unless required by applicable law or agreed to in writing, software distributed 
-// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
+//Package aop is Aspect Oriented Programming.
 package aop
 
 import (
-	// "fmt"
 	"time"
 )
 
+/*
+Aspect can do calls like chain
+
+	NewAspect().
+	    Retry(3).
+	    Delay(10 * time.Second).
+	    Repeat(5).
+	    Do(func() {
+	        fmt.Println("Test")
+	})
+
+Means print Test line 5 times, after 10 seconds, if panic happen retry 3 times.
+*/
 type Aspect interface {
 	Recover(err func(interface{})) Aspect
 	Retry(times int) Aspect
@@ -25,6 +38,7 @@ type Aspect interface {
 	Do(work func())
 }
 
+//NewAspect is constructor of Aspect
 func NewAspect() Aspect {
 	return &aspect{func(do func()) {
 		do()
@@ -37,10 +51,10 @@ type aspect struct {
 
 func (a *aspect) Join(work func(func())) Aspect {
 	// fmt.Println("Joining", work)
-	old_chain := a.chain
+	oldChain := a.chain
 	a.chain = func(do func()) {
 		// fmt.Println("chaining", work)
-		old_chain(func() {
+		oldChain(func() {
 			work(do)
 		})
 	}
