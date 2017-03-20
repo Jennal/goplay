@@ -13,7 +13,7 @@ type TagContainer interface {
 
 type TagContainerImpl struct {
 	sync.Mutex
-	data map[string]bool
+	Tags map[string]bool
 }
 
 func (t TagContainerImpl) Contains(names ...string) bool {
@@ -21,7 +21,7 @@ func (t TagContainerImpl) Contains(names ...string) bool {
 	defer t.Unlock()
 
 	for _, name := range names {
-		_, ok := t.data[name]
+		_, ok := t.Tags[name]
 		if !ok {
 			return false
 		}
@@ -35,7 +35,7 @@ func (t TagContainerImpl) Add(names ...string) {
 	defer t.Unlock()
 
 	for _, name := range names {
-		t.data[name] = true
+		t.Tags[name] = true
 	}
 }
 
@@ -44,6 +44,6 @@ func (t TagContainerImpl) Remove(names ...string) {
 	defer t.Unlock()
 
 	for _, name := range names {
-		delete(t.data, name)
+		delete(t.Tags, name)
 	}
 }
