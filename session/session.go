@@ -28,7 +28,7 @@ type Session struct {
 
 	ID       int
 	Encoding pkg.EncodingType
-	encoder  encode.EncodeDecoder
+	Encoder  encode.EncodeDecoder
 }
 
 func NewSession(cli transfer.IClient) *Session {
@@ -37,6 +37,7 @@ func NewSession(cli transfer.IClient) *Session {
 		Map:      data.NewMap(),
 		ID:       0,
 		Encoding: defaults.Encoding,
+		Encoder:  encode.GetEncodeDecoder(defaults.Encoding),
 	}
 }
 
@@ -47,7 +48,7 @@ func (s *Session) Bind(id int) {
 func (s *Session) SetEncoding(e pkg.EncodingType) error {
 	if encoder := encode.GetEncodeDecoder(e); encoder != nil {
 		s.Encoding = e
-		s.encoder = encoder
+		s.Encoder = encoder
 		return nil
 	}
 
@@ -55,9 +56,8 @@ func (s *Session) SetEncoding(e pkg.EncodingType) error {
 }
 
 func (s *Session) Push(route string, data interface{}) error {
-	header := s.NewHeader(pkg.PKG_NOTIFY, s.Encoding, route)
-	encoder := encode.GetEncodeDecoder(s.Encoding)
-	buf, err := encoder.Marshal(data)
+	header := s.NewHeader(pkg.PKG_PUSH, s.Encoding, route)
+	buf, err := s.Encoder.Marshal(data)
 	if err != nil {
 		return err
 	}

@@ -13,38 +13,40 @@
 //Package pkg defines data structures pass through network
 package pkg
 
-type Status int8
+type Status byte
 
 const (
-	STAT_OK Status = iota
-	STAT_ERR
-	STAT_ERR_WRONG_PARAMS
-	STAT_ERR_DECODE_FAILED
-	STAT_ERR_TIMEOUT
+	STAT_OK                Status = 0x00
+	STAT_ERR                      = 0x90
+	STAT_ERR_WRONG_PARAMS         = 0x91
+	STAT_ERR_DECODE_FAILED        = 0x92
+	STAT_ERR_TIMEOUT              = 0x93
 )
 
 type PackageType byte
 
 const (
-	PKG_NOTIFY PackageType = iota
-	PKG_REQUEST
-	PKG_RESPONSE
-	PKG_HEARTBEAT
-	PKG_HEARTBEAT_RESPONSE
+	PKG_NOTIFY             PackageType = 0x00
+	PKG_REQUEST                        = 0x01
+	PKG_RESPONSE                       = 0x02
+	PKG_PUSH                           = 0x03
+	PKG_HEARTBEAT                      = 0x04
+	PKG_HEARTBEAT_RESPONSE             = 0x05
 
-	PKG_RPC_NOTIFY
-	PKG_RPC_REQUEST
-	PKG_RPC_RESPONSE
+	PKG_RPC_NOTIFY   = 0x06
+	PKG_RPC_REQUEST  = 0x07
+	PKG_RPC_RESPONSE = 0x08
+	PKG_RPC_PUSH     = 0x09
 )
 
 type EncodingType byte
 
 const (
-	ENCODING_NONE EncodingType = iota
-	ENCODING_GOB
-	ENCODING_JSON
-	ENCODING_BSON
-	ENCODING_PROTOBUF
+	ENCODING_NONE     EncodingType = 0x00
+	ENCODING_GOB                   = 0x01
+	ENCODING_JSON                  = 0x02
+	ENCODING_BSON                  = 0x03
+	ENCODING_PROTOBUF              = 0x04
 )
 
 type PackageIDType byte
