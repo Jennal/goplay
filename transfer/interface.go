@@ -28,6 +28,7 @@ type IClient interface {
 	RegistDelegate(delegate IClientDelegate)
 	UnregistDelegate(delegate IClientDelegate)
 
+	LocalAddr() net.Addr
 	RemoteAddr() net.Addr
 
 	IsConnected() bool
@@ -51,8 +52,7 @@ type IServer interface {
 	RegistDelegate(delegate IServerDelegate)
 	UnregistDelegate(delegate IServerDelegate)
 
-	Host() string
-	Port() int
+	Addr() net.Addr
 	Clients() []IClient
 
 	Start() error

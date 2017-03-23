@@ -66,6 +66,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	fmt.Println("server started:", ser.Addr())
 	fmt.Scanf("%s", nil)
 
 	cli := tcp.NewClient()

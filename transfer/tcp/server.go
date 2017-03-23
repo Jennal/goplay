@@ -56,16 +56,12 @@ func (serv *server) UnregistDelegate(delegate transfer.IServerDelegate) {
 	serv.Off(transfer.EVENT_SERVER_NEW_CLIENT, delegate)
 }
 
-func (serv *server) Host() string {
-	return serv.host
-}
+func (serv *server) Addr() net.Addr {
+	if serv.listener == nil {
+		return nil
+	}
 
-func (serv *server) Port() int {
-	return serv.port
-}
-
-func (serv *server) HostPort() string {
-	return fmt.Sprintf("%s:%d", serv.Host(), serv.Port())
+	return serv.listener.Addr()
 }
 
 func (serv *server) Clients() []transfer.IClient {
@@ -77,7 +73,7 @@ func (serv *server) Start() error {
 		return nil
 	}
 
-	host := serv.HostPort()
+	host := fmt.Sprintf("%s:%d", serv.host, serv.port)
 	ln, err := net.Listen("tcp", host)
 	if err != nil {
 		return err
@@ -94,6 +90,7 @@ func (serv *server) Start() error {
 				serv.Stop()
 			}
 
+			// fmt.Println("New Client:", conn.LocalAddr(), conn.RemoteAddr())
 			client := NewClientWithConnect(conn)
 			client.On(transfer.EVENT_CLIENT_DISCONNECTED, serv, func(cli transfer.IClient) {
 				//remove from serv.clients
