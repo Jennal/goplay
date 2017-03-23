@@ -69,6 +69,10 @@ func (client *client) UnregistDelegate(delegate transfer.IClientDelegate) {
 	client.Off(transfer.EVENT_CLIENT_DISCONNECTED, delegate)
 }
 
+func (client *client) RemoteAddr() net.Addr {
+	return client.conn.RemoteAddr()
+}
+
 func (client *client) IsConnected() bool {
 	return client.conn != nil && client.isConnected
 }

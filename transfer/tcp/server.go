@@ -56,7 +56,19 @@ func (serv *server) UnregistDelegate(delegate transfer.IServerDelegate) {
 	serv.Off(transfer.EVENT_SERVER_NEW_CLIENT, delegate)
 }
 
-func (serv *server) GetClients() []transfer.IClient {
+func (serv *server) Host() string {
+	return serv.host
+}
+
+func (serv *server) Port() int {
+	return serv.port
+}
+
+func (serv *server) HostPort() string {
+	return fmt.Sprintf("%s:%d", serv.Host(), serv.Port())
+}
+
+func (serv *server) Clients() []transfer.IClient {
 	return serv.clients
 }
 
@@ -65,7 +77,7 @@ func (serv *server) Start() error {
 		return nil
 	}
 
-	host := fmt.Sprintf("%s:%d", serv.host, serv.port)
+	host := serv.HostPort()
 	ln, err := net.Listen("tcp", host)
 	if err != nil {
 		return err
