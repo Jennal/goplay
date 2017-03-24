@@ -22,6 +22,7 @@ import (
 	"github.com/jennal/goplay/aop"
 	"github.com/jennal/goplay/encode"
 	"github.com/jennal/goplay/filter"
+	"github.com/jennal/goplay/filter/heartbeat"
 	"github.com/jennal/goplay/helpers"
 	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/pkg"
@@ -57,8 +58,10 @@ func NewServiceClient(cli transfer.IClient) *ServiceClient {
 	result := &ServiceClient{
 		Session: session.NewSession(cli),
 
-		router:  nil,
-		filters: nil,
+		router: nil,
+		filters: []filter.IFilter{
+			heartbeat.NewHeartBeatManager(),
+		},
 
 		requestCbs: make(map[pkg.PackageIDType]*requestCallbacks),
 		pushCbs:    make(map[string][]*Method),
