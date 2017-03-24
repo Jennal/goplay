@@ -56,7 +56,7 @@ func (self *Handler) Add(sess *session.Session, n int) (int, *pkg.ErrorMessage) 
 }
 
 func main() {
-	ser := tcp.NewServer("", 9999)
+	ser := tcp.NewServer("", 9990)
 	serv := service.NewService("test", ser)
 
 	serv.RegistHanlder(&Handler{})
@@ -74,7 +74,7 @@ func main() {
 	client.AddListener("test.push", func(line string) {
 		fmt.Println("[test.push] recv: ", line)
 	})
-	client.Connect("", 9999)
+	client.Connect("", 9990)
 
 	client.Request("test.handler.add", 1, func(result int) {
 		fmt.Println("[test.handler.add] callback: ", result)

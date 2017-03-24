@@ -14,8 +14,6 @@
 package service
 
 import (
-	"fmt"
-
 	"github.com/jennal/goplay/defaults"
 	"github.com/jennal/goplay/encode"
 	"github.com/jennal/goplay/filter"
@@ -71,25 +69,25 @@ func (self *Service) RegistFilter(obj filter.IFilter) {
 }
 
 func (self *Service) OnStarted() {
-	fmt.Printf("OnStarted %p\n", self)
+	log.Logf("OnStarted %p", self)
 	for _, handler := range self.handlers {
 		handler.OnStarted()
 	}
 }
 
 func (self *Service) OnError(err error) {
-	fmt.Println("OnError", err)
+	log.Error(err)
 }
 
 func (self *Service) OnStopped() {
-	fmt.Println("OnStopped")
+	log.Log("OnStopped")
 	for _, handler := range self.handlers {
 		handler.OnStopped()
 	}
 }
 
 func (self *Service) OnNewClient(client transfer.IClient) {
-	fmt.Println("OnNewClient", client)
+	log.Log("OnNewClient:", client)
 	serviceClient := NewServiceClient(client)
 	serviceClient.SetEncoding(self.Encoding)
 	serviceClient.SetRouter(self.router)
