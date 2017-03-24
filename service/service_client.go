@@ -104,7 +104,7 @@ func (s *ServiceClient) checkTimeoutLoop() {
 func (s *ServiceClient) setupEventLoop() {
 	var exitChan chan int
 	s.On(transfer.EVENT_CLIENT_CONNECTED, s, func(client transfer.IClient) {
-		sess := session.NewSession(client)
+		sess := s.Session
 
 		if s.filters != nil && len(s.filters) > 0 {
 			for _, filter := range s.filters {
