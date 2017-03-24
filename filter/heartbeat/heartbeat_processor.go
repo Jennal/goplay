@@ -84,7 +84,7 @@ func (self *HeartBeatProcessor) popTime(id pkg.PackageIDType) *time.Time {
 func (self *HeartBeatProcessor) checkTimeOut() {
 	for {
 		if self.stopSignal {
-			break
+			return
 		}
 
 		// fmt.Printf("[%v] Check Timeout\n", time.Now())
@@ -143,14 +143,15 @@ func (self *HeartBeatProcessor) SetClient(sess *session.Session) bool /* return 
 	go func() {
 		for {
 			if self.stopSignal {
-				break
+				return
 			}
 
 			if err := sess.Send(self.newHeader(sess), []byte{}); err == nil {
 				self.sendCount++
 				self.manager.incSendCount()
 			} else {
-				self.incTimeOut()
+				sess.Disconnect()
+				return
 			}
 
 			time.Sleep(INTERNAL)

@@ -95,12 +95,6 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 	serviceClient.SetRouter(self.router)
 	serviceClient.SetFilters(self.filters)
 
-	for _, filter := range self.filters {
-		if !filter.OnNewClient(serviceClient.Session) {
-			return
-		}
-	}
-
 	for _, handler := range self.handlers {
 		handler.OnNewClient(serviceClient.Session)
 	}
