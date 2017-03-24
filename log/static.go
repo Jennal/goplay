@@ -16,7 +16,7 @@ var defaultLogger = NewLogger("", 4)
 
 //Log logs normal info with a string
 func Log(args ...interface{}) {
-	defaultLogger.Log(args)
+	defaultLogger.Log(args...)
 }
 
 //Logf logs normal info with a string format
@@ -41,5 +41,5 @@ func NewErrorf(format string, args ...interface{}) error {
 
 //NewError logs error info with a string and return an error with that message
 func NewError(args ...interface{}) error {
-	return defaultLogger.NewError(args)
+	return defaultLogger.NewError(args...)
 }

@@ -57,7 +57,7 @@ func NewLogger(prefix string, depth int) Logger {
 
 func (logger _logger) Log(args ...interface{}) {
 	setStdout()
-	line := fmt.Sprint(args)
+	line := fmt.Sprint(args...)
 	l.Output(logger.depth, logger.prefix+line)
 }
 
@@ -85,7 +85,7 @@ func (logger _logger) NewErrorf(format string, args ...interface{}) error {
 
 func (logger _logger) NewError(args ...interface{}) error {
 	setStderr()
-	msg := fmt.Sprint(args)
+	msg := fmt.Sprint(args...)
 	err := errors.New(msg)
 	l.Output(logger.depth, logger.prefix+err.Error())
 	return err
