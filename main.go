@@ -118,4 +118,6 @@ func main() {
 	// }()
 
 	fmt.Scanf("%s", nil)
+	serv.Stop()
+	fmt.Scanf("%s", nil)
 }

@@ -105,7 +105,12 @@ func (s *ServiceClient) checkTimeoutLoop() {
 }
 
 func (s *ServiceClient) setupEventLoop() {
-	var exitChan chan int
+	s.AddListener(ON_SERVICE_DOWN, func(ok bool) {
+		// log.Log(ON_SERVICE_DOWN)
+		s.Disconnect()
+	})
+
+	exitChan := make(chan int, 1)
 	s.On(transfer.EVENT_CLIENT_CONNECTED, s, func(client transfer.IClient) {
 		sess := s.Session
 
@@ -189,9 +194,7 @@ func (s *ServiceClient) setupEventLoop() {
 					log.Error(err.(error))
 				}
 
-				if sess.IsConnected() {
-					sess.Disconnect()
-				}
+				sess.Disconnect()
 			})
 		}()
 	})
@@ -268,9 +271,10 @@ func (s *ServiceClient) recvPush(header *pkg.Header, body []byte) {
 		return
 	}
 
-	for _, item := range list {
+	for i, item := range list {
 		val := item.NewArg(0)
 		s.Encoder.Unmarshal(body, val)
+		log.Log("==========>\t", i, "\t", val)
 		item.Call(helpers.GetValueFromPtr(val))
 	}
 }

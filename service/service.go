@@ -14,6 +14,8 @@
 package service
 
 import (
+	"sync"
+
 	"github.com/jennal/goplay/defaults"
 	"github.com/jennal/goplay/encode"
 	"github.com/jennal/goplay/filter"
@@ -34,6 +36,9 @@ type Service struct {
 
 	handlers []handler.IHandler
 	filters  []filter.IFilter
+
+	clients      []*ServiceClient
+	clientsMutex sync.Mutex
 }
 
 func NewService(name string, serv transfer.IServer) *Service {
@@ -79,6 +84,14 @@ func (self *Service) OnError(err error) {
 	log.Error(err)
 }
 
+func (self *Service) OnBeforeStop() {
+	log.Log("OnBeforeStop")
+	for _, client := range self.clients {
+		client.Push(ON_SERVICE_DOWN, true)
+	}
+	// time.Sleep(100 * time.Millisecond)
+}
+
 func (self *Service) OnStopped() {
 	log.Log("OnStopped")
 	for _, handler := range self.handlers {
@@ -92,6 +105,22 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 	serviceClient.SetEncoding(self.Encoding)
 	serviceClient.SetRouter(self.router)
 	serviceClient.SetFilters(self.filters)
+
+	serviceClient.On(transfer.EVENT_CLIENT_DISCONNECTED, self, func(cli transfer.IClient) {
+		self.clientsMutex.Lock()
+		defer self.clientsMutex.Unlock()
+
+		for i, client := range self.clients {
+			if client == serviceClient {
+				self.clients = append(self.clients[:i], self.clients[i+1:]...)
+				break
+			}
+		}
+	})
+	self.clientsMutex.Lock()
+	self.clients = append(self.clients, serviceClient)
+	self.clientsMutex.Unlock()
+	log.Log(len(self.clients), self.clients)
 
 	for _, handler := range self.handlers {
 		handler.OnNewClient(serviceClient.Session)

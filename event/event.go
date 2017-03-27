@@ -14,6 +14,7 @@
 package event
 
 import "sync"
+import "github.com/jennal/goplay/aop"
 
 type IEvent interface {
 	On(string, interface{}, EventFunc)
@@ -90,4 +91,44 @@ func (self Event) Emit(name string, args ...interface{}) {
 	for _, item := range list {
 		item.Call(args...)
 	}
+}
+
+func (self Event) EmitParalle(onfinish func(), name string, args ...interface{}) {
+	list, ok := self.cbs[name]
+	if !ok {
+		return
+	}
+
+	funcs := make([]func(complete chan bool), len(list))
+	for i, item := range list {
+		funcs[i] = func(complete chan bool) {
+			item.Call(args...)
+			complete <- true
+		}
+	}
+
+	go func() {
+		aop.Parallel(funcs)
+		onfinish()
+	}()
+}
+
+func (self Event) EmitSequence(onfinish func(), name string, args ...interface{}) {
+	list, ok := self.cbs[name]
+	if !ok {
+		return
+	}
+
+	funcs := make([]func(next chan bool, exit chan bool), len(list))
+	for i, item := range list {
+		funcs[i] = func(next chan bool, exit chan bool) {
+			item.Call(args...)
+			next <- true
+		}
+	}
+
+	go func() {
+		aop.Sequence(funcs)
+		onfinish()
+	}()
 }

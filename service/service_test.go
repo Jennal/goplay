@@ -13,6 +13,7 @@
 package service
 
 import (
+	"runtime"
 	"testing"
 	"time"
 
@@ -27,6 +28,24 @@ const (
 	PORT     = 9000
 	Encoding = defaults.Encoding
 )
+
+func StackTrace(all bool) string {
+	// Reserve 10K buffer at first
+	buf := make([]byte, 10240)
+
+	for {
+		size := runtime.Stack(buf, all)
+		// The size of the buffer may be not enough to hold the stacktrace,
+		// so double the buffer size
+		if size == len(buf) {
+			buf = make([]byte, len(buf)<<1)
+			continue
+		}
+		break
+	}
+
+	return string(buf)
+}
 
 type CustomMessage struct {
 	Name string
@@ -59,8 +78,9 @@ func (self *Handler) OnStopped() {
 }
 
 func (self *Handler) OnNewClient(sess *session.Session) {
-	self.t.Log("Handler-OnNewClient", sess)
 	self.ClientCount++
+	self.t.Log("Handler-OnNewClient", sess, self.ClientCount)
+	// self.t.Log(StackTrace(false))
 }
 
 func (self *Handler) NotifyString(sess *session.Session, line string) *pkg.ErrorMessage {
@@ -112,6 +132,7 @@ func TestService(t *testing.T) {
 
 	err := serv.Start()
 	assert.Nil(t, err, "servive.Start() error: %v", err)
+	assert.Equal(t, 0, len(serv.clients))
 
 	cli := tcp.NewClient()
 	client := NewServiceClient(cli)
@@ -119,8 +140,16 @@ func TestService(t *testing.T) {
 
 	err = client.Connect("", PORT)
 	assert.Nil(t, err, "servive.Start() error: %v", err)
+	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, 1, len(serv.clients))
 
 	callIn := make(map[string]bool, 0)
+
+	//on service down
+	client.AddListener(ON_SERVICE_DOWN, func(ok bool) {
+		// log.Log(ON_SERVICE_DOWN, " => TEST")
+		callIn[ON_SERVICE_DOWN] = true
+	})
 
 	//on push
 	client.AddListener("test.pushstring", func(line string) {
@@ -203,14 +232,16 @@ func TestService(t *testing.T) {
 	})
 	assert.Nil(t, err, "client.Request() error: %v", err)
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(100 * time.Millisecond)
 	err = serv.Stop()
 	assert.Nil(t, err, "serv.Stop() error: %v", err)
 
 	assert.Equal(t, true, handler.Started)
 	assert.Equal(t, true, handler.Stopped)
 
+	time.Sleep(100 * time.Millisecond)
 	assert.Equal(t, map[string]bool{
+		ON_SERVICE_DOWN:              true,
 		"test.pushstring":            true,
 		"test.handler.requestint":    true,
 		"test.handler.requeststring": true,
@@ -220,3 +251,26 @@ func TestService(t *testing.T) {
 		"test.handler.requestfail":   true,
 	}, callIn)
 }
+
+// func TestClientsCollection(t *testing.T) {
+// 	ser := tcp.NewServer("", PORT+1)
+// 	serv := NewService("test", ser)
+// 	serv.SetEncoding(Encoding)
+
+// 	handler := NewHandler(t)
+// 	serv.RegistHanlder(handler)
+
+// 	err := serv.Start()
+// 	assert.Nil(t, err, "servive.Start() error: %v", err)
+// 	assert.Equal(t, 0, len(serv.clients))
+
+// 	cli := tcp.NewClient()
+// 	client := NewServiceClient(cli)
+// 	client.SetEncoding(Encoding)
+
+// 	err = client.Connect("", PORT+1)
+// 	assert.Nil(t, err, "servive.Start() error: %v", err)
+// 	assert.Equal(t, 1, len(serv.clients))
+// 	assert.Equal(t, client.LocalAddr(), serv.clients[0].RemoteAddr())
+
+// }

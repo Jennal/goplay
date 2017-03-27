@@ -17,6 +17,8 @@ import (
 	"fmt"
 	"net"
 
+	"sync"
+
 	"github.com/jennal/goplay/event"
 	"github.com/jennal/goplay/transfer"
 )
@@ -26,8 +28,10 @@ type server struct {
 
 	host      string
 	port      int
-	clients   []transfer.IClient
 	isStarted bool
+
+	clients      []transfer.IClient
+	clientsMutex sync.Mutex
 
 	listener net.Listener
 }
@@ -44,6 +48,7 @@ func NewServer(host string, port int) transfer.IServer {
 
 func (serv *server) RegistDelegate(delegate transfer.IServerDelegate) {
 	serv.On(transfer.EVENT_SERVER_STARTED, delegate, delegate.OnStarted)
+	serv.On(transfer.EVENT_SERVER_BEFORE_STOP, delegate, delegate.OnBeforeStop)
 	serv.On(transfer.EVENT_SERVER_STOPPED, delegate, delegate.OnStopped)
 	serv.On(transfer.EVENT_SERVER_ERROR, delegate, delegate.OnError)
 	serv.On(transfer.EVENT_SERVER_NEW_CLIENT, delegate, delegate.OnNewClient)
@@ -51,6 +56,7 @@ func (serv *server) RegistDelegate(delegate transfer.IServerDelegate) {
 
 func (serv *server) UnregistDelegate(delegate transfer.IServerDelegate) {
 	serv.Off(transfer.EVENT_SERVER_STARTED, delegate)
+	serv.Off(transfer.EVENT_SERVER_BEFORE_STOP, delegate)
 	serv.Off(transfer.EVENT_SERVER_STOPPED, delegate)
 	serv.Off(transfer.EVENT_SERVER_ERROR, delegate)
 	serv.Off(transfer.EVENT_SERVER_NEW_CLIENT, delegate)
@@ -88,20 +94,27 @@ func (serv *server) Start() error {
 			if err != nil {
 				serv.Emit(transfer.EVENT_SERVER_ERROR, err)
 				serv.Stop()
+				return
 			}
 
 			// fmt.Println("New Client:", conn.LocalAddr(), conn.RemoteAddr())
 			client := NewClientWithConnect(conn)
-			client.On(transfer.EVENT_CLIENT_DISCONNECTED, serv, func(cli transfer.IClient) {
+			client.On(transfer.EVENT_CLIENT_DISCONNECTED, serv, func(c transfer.IClient) {
+				serv.clientsMutex.Lock()
+				defer serv.clientsMutex.Unlock()
+
 				//remove from serv.clients
-				for i := len(serv.clients) - 1; i >= 0; i-- {
-					if serv.clients[i] == cli {
+				for i, cli := range serv.clients {
+					if c == cli {
 						serv.clients = append(serv.clients[:i], serv.clients[i+1:]...)
-						break
+						return
 					}
 				}
 			})
+			serv.clientsMutex.Lock()
 			serv.clients = append(serv.clients, client)
+			serv.clientsMutex.Unlock()
+
 			serv.Emit(transfer.EVENT_SERVER_NEW_CLIENT, client)
 		}
 	}()
@@ -115,6 +128,7 @@ func (serv *server) Stop() error {
 		return nil
 	}
 
+	serv.Emit(transfer.EVENT_SERVER_BEFORE_STOP)
 	defer serv.Emit(transfer.EVENT_SERVER_STOPPED)
 	serv.isStarted = false
 	return serv.listener.Close()

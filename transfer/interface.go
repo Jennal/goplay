@@ -62,6 +62,7 @@ type IServer interface {
 type IServerDelegate interface {
 	OnStarted()
 	OnError(err error)
+	OnBeforeStop()
 	OnStopped()
 
 	OnNewClient(client IClient)
