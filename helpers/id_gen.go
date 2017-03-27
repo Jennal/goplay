@@ -13,18 +13,18 @@
 package helpers
 
 type IDGen struct {
-	maxID  int
-	nextID int
+	maxID  uint32
+	nextID uint32
 }
 
-func NewIDGen(max int) *IDGen {
+func NewIDGen(max uint32) *IDGen {
 	return &IDGen{
 		maxID:  max,
 		nextID: 0,
 	}
 }
 
-func (self *IDGen) NextID() int {
+func (self *IDGen) NextID() uint32 {
 	if self.nextID == self.maxID {
 		defer func() { self.nextID = 0 }()
 	} else {

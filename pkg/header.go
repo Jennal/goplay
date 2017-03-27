@@ -20,7 +20,10 @@ import (
 	"github.com/jennal/goplay/log"
 )
 
-const HEADER_STATIC_SIZE = 6
+const (
+	HEADER_STATIC_SIZE = 6
+	INT_BYTE_SIZE      = 4
+)
 
 type Header struct {
 	Type        PackageType
@@ -29,6 +32,8 @@ type Header struct {
 	Status      Status
 	ContentSize PackageSizeType
 	Route       string
+
+	ClientID uint32 /* rpc only */
 }
 
 func NewHeader(t PackageType, e EncodingType, idGen *IDGen, r string) *Header {
@@ -42,7 +47,28 @@ func NewHeader(t PackageType, e EncodingType, idGen *IDGen, r string) *Header {
 	}
 }
 
-type HeaderEncoder struct {
+func NewRpcHeader(h *Header, clientId uint32) *Header {
+	return &Header{
+		Type:        h.Type | PKG_RPC,
+		Encoding:    h.Encoding,
+		ID:          h.ID,
+		Status:      h.Status,
+		ContentSize: h.ContentSize,
+		Route:       h.Route,
+		ClientID:    clientId,
+	}
+}
+
+func NewHeaderFromRpc(h *Header) *Header {
+	return &Header{
+		Type:        h.Type &^ PKG_RPC,
+		Encoding:    h.Encoding,
+		ID:          h.ID,
+		Status:      h.Status,
+		ContentSize: h.ContentSize,
+		Route:       h.Route,
+		ClientID:    0,
+	}
 }
 
 func (self *Header) Marshal() ([]byte, error) {
@@ -62,6 +88,14 @@ func (self *Header) Marshal() ([]byte, error) {
 
 	buffer.WriteByte(byte(len(self.Route)))
 	buffer.Write([]byte(self.Route))
+
+	if self.Type&PKG_RPC == PKG_RPC {
+		buf, err := helpers.GetBytes(self.ClientID)
+		if err != nil {
+			return nil, err
+		}
+		buffer.Write(buf)
+	}
 
 	return buffer.Bytes(), err
 }
@@ -91,7 +125,25 @@ func ReadHeader(reader io.Reader, header *Header) (int, error) {
 		buffer = append(buffer, routeBuf...)
 	}
 
-	return UnmarshalHeader(buffer, header)
+	n, err := UnmarshalHeader(buffer, header)
+	if err != nil {
+		return n, err
+	}
+
+	if header.Type&PKG_RPC == PKG_RPC {
+		clientIDBuf := make([]byte, INT_BYTE_SIZE)
+		_, err := reader.Read(clientIDBuf)
+		if err != nil {
+			return 0, err
+		}
+
+		header.ClientID, err = helpers.ToUInt32(clientIDBuf)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return n + INT_BYTE_SIZE, nil
 }
 
 func UnmarshalHeader(data []byte, header *Header) (int, error) {

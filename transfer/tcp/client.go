@@ -41,7 +41,7 @@ type client struct {
 
 	conn        net.Conn
 	isConnected bool
-	id          int
+	id          uint32
 
 	sendMutex sync.Mutex
 	recvMutex sync.Mutex
@@ -92,7 +92,7 @@ func (client *client) RemoteAddr() net.Addr {
 	return client.conn.RemoteAddr()
 }
 
-func (client *client) Id() int {
+func (client *client) Id() uint32 {
 	return client.id
 }
 
