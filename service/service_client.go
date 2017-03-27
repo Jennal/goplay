@@ -271,10 +271,10 @@ func (s *ServiceClient) recvPush(header *pkg.Header, body []byte) {
 		return
 	}
 
-	for i, item := range list {
+	for _, item := range list {
 		val := item.NewArg(0)
 		s.Encoder.Unmarshal(body, val)
-		log.Log("==========>\t", i, "\t", val)
+		// log.Log("==========>\t", i, "\t", val)
 		item.Call(helpers.GetValueFromPtr(val))
 	}
 }
