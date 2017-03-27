@@ -14,13 +14,18 @@
 package session
 
 import (
+	"math"
+
 	"github.com/jennal/goplay/data"
 	"github.com/jennal/goplay/defaults"
 	"github.com/jennal/goplay/encode"
+	"github.com/jennal/goplay/helpers"
 	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/transfer"
 )
+
+var IDGen = helpers.NewIDGen(math.MaxUint16)
 
 type Session struct {
 	transfer.IClient

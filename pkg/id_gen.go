@@ -5,31 +5,29 @@
 //
 // http://opensource.org/licenses/MIT
 //
-// Unless required by applicable law or agreed to in writing, software distributed 
-// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
 package pkg
 
-const maxID PackageIDType = 255
+import (
+	"github.com/jennal/goplay/helpers"
+)
+
+const maxID = 255
 
 type IDGen struct {
-	nextID PackageIDType
+	*helpers.IDGen
 }
 
 func NewIDGen() *IDGen {
 	return &IDGen{
-		nextID: 0,
+		IDGen: helpers.NewIDGen(maxID),
 	}
 }
 
 func (self *IDGen) NextID() PackageIDType {
-	if self.nextID == maxID {
-		defer func() { self.nextID = 0 }()
-	} else {
-		defer func() { self.nextID++ }()
-	}
-
-	return self.nextID
+	return PackageIDType(self.IDGen.NextID())
 }

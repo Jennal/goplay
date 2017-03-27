@@ -19,7 +19,9 @@ import (
 
 	"sync"
 
+	"github.com/jennal/goplay/defaults"
 	"github.com/jennal/goplay/event"
+	"github.com/jennal/goplay/helpers"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/transfer"
 	"github.com/jennal/goplay/transfer/base"
@@ -31,12 +33,15 @@ var (
 	ERR_WRITE_BEFORE_CONNECTED = errors.New("write before connected")
 )
 
+var idGen = helpers.NewIDGen(defaults.MAX_CLIENT_COUNT)
+
 type client struct {
 	*event.Event
 	*base.HeaderCreator
 
 	conn        net.Conn
 	isConnected bool
+	id          int
 
 	sendMutex sync.Mutex
 	recvMutex sync.Mutex
@@ -48,6 +53,7 @@ func NewClientWithConnect(conn net.Conn) transfer.IClient {
 		HeaderCreator: base.NewHeaderCreator(),
 		conn:          conn,
 		isConnected:   true,
+		id:            idGen.NextID(),
 	}
 }
 
@@ -56,6 +62,7 @@ func NewClient() transfer.IClient {
 		Event:         event.NewEvent(),
 		HeaderCreator: base.NewHeaderCreator(),
 		isConnected:   false,
+		id:            idGen.NextID(),
 	}
 }
 
@@ -83,6 +90,10 @@ func (client *client) RemoteAddr() net.Addr {
 	}
 
 	return client.conn.RemoteAddr()
+}
+
+func (client *client) Id() int {
+	return client.id
 }
 
 func (client *client) IsConnected() bool {

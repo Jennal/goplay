@@ -10,18 +10,26 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package pkg
+package helpers
 
-import (
-	"testing"
+type IDGen struct {
+	maxID  int
+	nextID int
+}
 
-	"github.com/stretchr/testify/assert"
-)
-
-func TestNextID(t *testing.T) {
-	gen := NewIDGen()
-	for i := 0; i < 512; i++ {
-		id := gen.NextID()
-		assert.Equal(t, PackageIDType(i%256), id)
+func NewIDGen(max int) *IDGen {
+	return &IDGen{
+		maxID:  max,
+		nextID: 0,
 	}
+}
+
+func (self *IDGen) NextID() int {
+	if self.nextID == self.maxID {
+		defer func() { self.nextID = 0 }()
+	} else {
+		defer func() { self.nextID++ }()
+	}
+
+	return self.nextID
 }

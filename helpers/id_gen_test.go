@@ -10,30 +10,18 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package session
+package helpers
 
 import (
-	"math"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-const maxID int = math.MaxUint16
-
-type IDGen struct {
-	nextID int
-}
-
-func NewIDGen() *IDGen {
-	return &IDGen{
-		nextID: 0,
+func TestNextID(t *testing.T) {
+	gen := NewIDGen(255)
+	for i := 0; i < 512; i++ {
+		id := gen.NextID()
+		assert.Equal(t, i%256, id)
 	}
-}
-
-func (self *IDGen) NextID() int {
-	if self.nextID == maxID {
-		defer func() { self.nextID = 0 }()
-	} else {
-		defer func() { self.nextID++ }()
-	}
-
-	return self.nextID
 }

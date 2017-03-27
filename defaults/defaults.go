@@ -14,8 +14,11 @@
 package defaults
 
 import "github.com/jennal/goplay/pkg"
+import "math"
 
 const (
 	//Encoding is default pkg encoding
 	Encoding = pkg.ENCODING_JSON
+
+	MAX_CLIENT_COUNT = math.MaxUint32
 )

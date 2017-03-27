@@ -30,7 +30,7 @@ type server struct {
 	port      int
 	isStarted bool
 
-	clients      []transfer.IClient
+	clients      map[int]transfer.IClient
 	clientsMutex sync.Mutex
 
 	listener net.Listener
@@ -41,7 +41,7 @@ func NewServer(host string, port int) transfer.IServer {
 		Event:     event.NewEvent(),
 		host:      host,
 		port:      port,
-		clients:   []transfer.IClient{},
+		clients:   make(map[int]transfer.IClient),
 		isStarted: false,
 	}
 }
@@ -70,8 +70,15 @@ func (serv *server) Addr() net.Addr {
 	return serv.listener.Addr()
 }
 
-func (serv *server) Clients() []transfer.IClient {
+func (serv *server) Clients() map[int]transfer.IClient {
 	return serv.clients
+}
+
+func (serv *server) GetClientById(id int) transfer.IClient {
+	serv.clientsMutex.Lock()
+	defer serv.clientsMutex.Unlock()
+
+	return serv.clients[id]
 }
 
 func (serv *server) Start() error {
@@ -104,15 +111,15 @@ func (serv *server) Start() error {
 				defer serv.clientsMutex.Unlock()
 
 				//remove from serv.clients
-				for i, cli := range serv.clients {
+				for _, cli := range serv.clients {
 					if c == cli {
-						serv.clients = append(serv.clients[:i], serv.clients[i+1:]...)
+						delete(serv.clients, cli.Id())
 						return
 					}
 				}
 			})
 			serv.clientsMutex.Lock()
-			serv.clients = append(serv.clients, client)
+			serv.clients[client.Id()] = client
 			serv.clientsMutex.Unlock()
 
 			serv.Emit(transfer.EVENT_SERVER_NEW_CLIENT, client)
