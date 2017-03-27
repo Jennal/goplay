@@ -31,7 +31,7 @@ type Session struct {
 	transfer.IClient
 	*data.Map
 
-	ID       int
+	ID       uint32
 	Encoding pkg.EncodingType
 	Encoder  encode.EncodeDecoder
 }
@@ -46,7 +46,7 @@ func NewSession(cli transfer.IClient) *Session {
 	}
 }
 
-func (s *Session) Bind(id int) {
+func (s *Session) Bind(id uint32) {
 	s.ID = id
 }
 
