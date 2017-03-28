@@ -190,8 +190,12 @@ func (s *ServiceClient) setupEventLoop() {
 					}
 				}
 			}, func(err interface{}) {
-				if err != nil && err.(error) != nil {
-					log.Error(err.(error))
+				if e, ok := err.(error); ok {
+					log.Error(e)
+				} else if err != nil {
+					log.Errorf("%#v", err)
+				} else {
+					log.Errorf("%#v", err)
 				}
 
 				sess.Disconnect()
