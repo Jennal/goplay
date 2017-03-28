@@ -62,6 +62,18 @@ func (serv *server) UnregistDelegate(delegate transfer.IServerDelegate) {
 	serv.Off(transfer.EVENT_SERVER_NEW_CLIENT, delegate)
 }
 
+func (serv *server) Host() string {
+	return serv.host
+}
+
+func (serv *server) Port() int {
+	return serv.port
+}
+
+func (serv *server) IsStarted() bool {
+	return serv.isStarted
+}
+
 func (serv *server) Addr() net.Addr {
 	if serv.listener == nil {
 		return nil

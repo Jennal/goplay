@@ -53,6 +53,10 @@ type IServer interface {
 	RegistDelegate(delegate IServerDelegate)
 	UnregistDelegate(delegate IServerDelegate)
 
+	Host() string
+	Port() int
+	IsStarted() bool
+
 	Addr() net.Addr
 	Clients() map[uint32]IClient
 	GetClientById(uint32) IClient
