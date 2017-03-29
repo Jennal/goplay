@@ -355,13 +355,7 @@ func (s *ServiceClient) Notify(route string, data interface{}) error {
 }
 
 func (s *ServiceClient) Push(route string, data interface{}) error {
-	header := s.NewHeader(pkg.PKG_RPC_PUSH, s.Encoding, route)
-	header = pkg.NewRpcHeader(header, s.ClientID)
-	buf, err := s.Encoder.Marshal(data)
-	if err != nil {
-		return err
-	}
-	return s.Send(header, buf)
+	return s.Session.Push(route, data)
 }
 
 func (s *ServiceClient) AddListener(route string, callback interface{}) {

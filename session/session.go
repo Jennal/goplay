@@ -66,7 +66,7 @@ func (s *Session) SetEncoding(e pkg.EncodingType) error {
 func (s *Session) Push(route string, data interface{}) error {
 	header := s.NewHeader(pkg.PKG_PUSH, s.Encoding, route)
 	if s.ClientID != 0 {
-		log.Log("Push: clientId = ", s.ClientID)
+		// log.Log("Push: clientId = ", s.ClientID)
 		header = pkg.NewRpcHeader(header, s.ClientID)
 	}
 	buf, err := s.Encoder.Marshal(data)
