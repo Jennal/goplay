@@ -75,6 +75,10 @@ func (self *ServiceClient) SetRouter(router *router.Router) {
 	self.router = router
 }
 
+func (self *ServiceClient) RegistFilter(filter filter.IFilter) {
+	self.filters = append(self.filters, filter)
+}
+
 func (self *ServiceClient) SetFilters(filters []filter.IFilter) {
 	self.filters = filters
 }
