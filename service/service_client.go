@@ -116,11 +116,9 @@ func (s *ServiceClient) setupEventLoop() {
 
 	exitChan := make(chan int, 1)
 	s.On(transfer.EVENT_CLIENT_CONNECTED, s, func(client transfer.IClient) {
-		sess := s.Session
-
 		if s.filters != nil && len(s.filters) > 0 {
 			for _, filter := range s.filters {
-				if !filter.OnNewClient(sess) {
+				if !filter.OnNewClient(s.Session) {
 					return
 				}
 			}
@@ -135,6 +133,7 @@ func (s *ServiceClient) setupEventLoop() {
 					case <-exitChan:
 						break Loop
 					default:
+						sess := session.NewSession(s)
 						header, bodyBuf, err := sess.Recv()
 						if err != nil {
 							log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
@@ -149,10 +148,14 @@ func (s *ServiceClient) setupEventLoop() {
 						//filters
 						if s.filters != nil && len(s.filters) > 0 {
 							for _, filter := range s.filters {
-								if !filter.OnRecv(sess, header, bodyBuf) {
+								if !filter.OnRecv(s.Session, header, bodyBuf) {
 									goto Loop
 								}
 							}
+						}
+
+						if (header.Type & pkg.PKG_RPC) == pkg.PKG_RPC {
+							sess.BindClientID(header.ClientID)
 						}
 
 						switch header.Type {
@@ -202,7 +205,7 @@ func (s *ServiceClient) setupEventLoop() {
 					log.Errorf("%#v", err)
 				}
 
-				sess.Disconnect()
+				s.Disconnect()
 			})
 		}()
 	})
@@ -323,6 +326,7 @@ func (s *ServiceClient) recvResponse(header *pkg.Header, body []byte) {
 
 func (s *ServiceClient) Request(route string, data interface{}, succCb interface{}, failCb func(*pkg.ErrorMessage)) error {
 	header := s.NewHeader(pkg.PKG_RPC_REQUEST, s.Encoding, route)
+	header = pkg.NewRpcHeader(header, s.ClientID)
 	cbs := requestCallbacks{
 		successCallbak: NewMethod(succCb),
 		failCallback:   NewMethod(failCb),
@@ -342,6 +346,7 @@ func (s *ServiceClient) Request(route string, data interface{}, succCb interface
 
 func (s *ServiceClient) Notify(route string, data interface{}) error {
 	header := s.NewHeader(pkg.PKG_RPC_NOTIFY, s.Encoding, route)
+	header = pkg.NewRpcHeader(header, s.ClientID)
 	buf, err := s.Encoder.Marshal(data)
 	if err != nil {
 		return err
@@ -351,6 +356,7 @@ func (s *ServiceClient) Notify(route string, data interface{}) error {
 
 func (s *ServiceClient) Push(route string, data interface{}) error {
 	header := s.NewHeader(pkg.PKG_RPC_PUSH, s.Encoding, route)
+	header = pkg.NewRpcHeader(header, s.ClientID)
 	buf, err := s.Encoder.Marshal(data)
 	if err != nil {
 		return err

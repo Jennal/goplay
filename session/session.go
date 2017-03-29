@@ -16,7 +16,6 @@ package session
 import (
 	"math"
 
-	"github.com/jennal/goplay/data"
 	"github.com/jennal/goplay/defaults"
 	"github.com/jennal/goplay/encode"
 	"github.com/jennal/goplay/helpers"
@@ -29,9 +28,9 @@ var IDGen = helpers.NewIDGen(math.MaxUint16)
 
 type Session struct {
 	transfer.IClient
-	*data.Map
 
 	ID       uint32
+	ClientID uint32
 	Encoding pkg.EncodingType
 	Encoder  encode.EncodeDecoder
 }
@@ -39,8 +38,8 @@ type Session struct {
 func NewSession(cli transfer.IClient) *Session {
 	return &Session{
 		IClient:  cli,
-		Map:      data.NewMap(),
 		ID:       0,
+		ClientID: 0,
 		Encoding: defaults.Encoding,
 		Encoder:  encode.GetEncodeDecoder(defaults.Encoding),
 	}
@@ -48,6 +47,10 @@ func NewSession(cli transfer.IClient) *Session {
 
 func (s *Session) Bind(id uint32) {
 	s.ID = id
+}
+
+func (s *Session) BindClientID(id uint32) {
+	s.ClientID = id
 }
 
 func (s *Session) SetEncoding(e pkg.EncodingType) error {
@@ -62,6 +65,10 @@ func (s *Session) SetEncoding(e pkg.EncodingType) error {
 
 func (s *Session) Push(route string, data interface{}) error {
 	header := s.NewHeader(pkg.PKG_PUSH, s.Encoding, route)
+	if s.ClientID != 0 {
+		log.Log("Push: clientId = ", s.ClientID)
+		header = pkg.NewRpcHeader(header, s.ClientID)
+	}
 	buf, err := s.Encoder.Marshal(data)
 	if err != nil {
 		return err
