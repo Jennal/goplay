@@ -146,6 +146,11 @@ func (s *ServiceClient) setupEventLoop() {
 							log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
 						}
 
+						if (header.Type & pkg.PKG_RPC) == pkg.PKG_RPC {
+							sess.BindClientID(header.ClientID)
+							s.BindClientID(header.ClientID) /* FIXME: this may not be good enough */
+						}
+
 						//filters
 						if s.filters != nil && len(s.filters) > 0 {
 							for _, filter := range s.filters {
@@ -153,10 +158,6 @@ func (s *ServiceClient) setupEventLoop() {
 									goto Loop
 								}
 							}
-						}
-
-						if (header.Type & pkg.PKG_RPC) == pkg.PKG_RPC {
-							sess.BindClientID(header.ClientID)
 						}
 
 						switch header.Type {

@@ -24,6 +24,7 @@ import (
 	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/router"
+	"github.com/jennal/goplay/session"
 	"github.com/jennal/goplay/transfer"
 )
 
@@ -53,6 +54,22 @@ func NewService(name string, serv transfer.IServer) *Service {
 	instance.RegistFilter(heartbeat.NewHeartBeatManager())
 
 	return instance
+}
+
+func (self *Service) Router() *router.Router {
+	return self.router
+}
+
+func (self *Service) Handlers() []handler.IHandler {
+	return self.handlers
+}
+
+func (self *Service) Filters() []filter.IFilter {
+	return self.filters
+}
+
+func (self *Service) ServiceClients() []*ServiceClient {
+	return self.clients
 }
 
 func (self *Service) SetEncoding(e pkg.EncodingType) error {
@@ -99,7 +116,7 @@ func (self *Service) OnStopped() {
 	}
 }
 
-func (self *Service) OnNewClient(client transfer.IClient) {
+func (self *Service) RegistNewClient(client transfer.IClient) *ServiceClient {
 	log.Log("OnNewClient:", client)
 	serviceClient := NewServiceClient(client)
 	serviceClient.SetEncoding(self.Encoding)
@@ -122,9 +139,17 @@ func (self *Service) OnNewClient(client transfer.IClient) {
 	self.clientsMutex.Unlock()
 	log.Log(len(self.clients), self.clients)
 
-	for _, handler := range self.handlers {
-		handler.OnNewClient(serviceClient.Session)
-	}
+	return serviceClient
+}
 
+func (self *Service) HandlerOnNewClient(sess *session.Session) {
+	for _, handler := range self.handlers {
+		handler.OnNewClient(sess)
+	}
+}
+
+func (self *Service) OnNewClient(client transfer.IClient) {
+	serviceClient := self.RegistNewClient(client)
+	self.HandlerOnNewClient(serviceClient.Session)
 	serviceClient.Emit(transfer.EVENT_CLIENT_CONNECTED, client)
 }
