@@ -134,6 +134,7 @@ func (s *ServiceClient) setupEventLoop() {
 						break Loop
 					default:
 						sess := session.NewSession(s)
+						sess.Bind(s.ID)
 						header, bodyBuf, err := sess.Recv()
 						if err != nil {
 							log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))

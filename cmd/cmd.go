@@ -17,10 +17,10 @@ import (
 	"os/signal"
 
 	"github.com/jennal/goplay/log"
-	"github.com/jennal/goplay/service"
+	"github.com/jennal/goplay/transfer"
 )
 
-func Start(s *service.Service) {
+func Start(s transfer.IServer) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
 
