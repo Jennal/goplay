@@ -123,6 +123,8 @@ func (self *Service) RegistNewClient(client transfer.IClient) *ServiceClient {
 	serviceClient.SetRouter(self.router)
 	serviceClient.SetFilters(self.filters)
 
+	serviceClient.Bind(session.IDGen.NextID())
+
 	serviceClient.On(transfer.EVENT_CLIENT_DISCONNECTED, self, func(cli transfer.IClient) {
 		self.clientsMutex.Lock()
 		defer self.clientsMutex.Unlock()
@@ -137,7 +139,7 @@ func (self *Service) RegistNewClient(client transfer.IClient) *ServiceClient {
 	self.clientsMutex.Lock()
 	self.clients = append(self.clients, serviceClient)
 	self.clientsMutex.Unlock()
-	log.Log(len(self.clients), self.clients)
+	// log.Log(len(self.clients), self.clients)
 
 	return serviceClient
 }

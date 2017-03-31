@@ -20,12 +20,12 @@ import (
 
 type SessionManager struct {
 	sync.Mutex
-	sessions []*Session
+	sessions map[uint32]map[uint32]*Session
 }
 
 func NewSessionManager() *SessionManager {
 	return &SessionManager{
-		sessions: make([]*Session, 0),
+		sessions: make(map[uint32]map[uint32]*Session),
 	}
 }
 
@@ -36,21 +36,62 @@ func (self *SessionManager) Add(sess *Session) {
 
 	self.Lock()
 	defer self.Unlock()
-	self.sessions = append(self.sessions, sess)
+
+	if _, ok := self.sessions[sess.ID]; !ok {
+		self.sessions[sess.ID] = make(map[uint32]*Session)
+	}
+
+	self.sessions[sess.ID][sess.ClientID] = sess
 }
 
 func (self *SessionManager) Remove(sess *Session) {
 	self.Lock()
 	defer self.Unlock()
 
-	for i, s := range self.sessions {
-		if s == sess {
-			self.sessions = append(self.sessions[:i], self.sessions[i+1:]...)
-			return
+	if subMap, ok := self.sessions[sess.ID]; ok {
+		if _, ok := subMap[sess.ClientID]; ok {
+			delete(self.sessions[sess.ID], sess.ClientID)
 		}
 	}
 }
 
+func (self *SessionManager) Count() int {
+	count := 0
+
+	self.Lock()
+	defer self.Unlock()
+
+	for _, subMap := range self.sessions {
+		count += len(subMap)
+	}
+
+	return count
+}
+
 func (self *SessionManager) Sessions() []*Session {
-	return self.sessions
+	result := make([]*Session, 0)
+
+	self.Lock()
+	defer self.Unlock()
+
+	for _, subMap := range self.sessions {
+		for _, sess := range subMap {
+			result = append(result, sess)
+		}
+	}
+
+	return result
+}
+
+func (self *SessionManager) GetSessionByID(id uint32, clientId uint32) *Session {
+	self.Lock()
+	defer self.Unlock()
+
+	if subMap, ok := self.sessions[id]; ok {
+		if sess, ok := subMap[clientId]; ok {
+			return sess
+		}
+	}
+
+	return nil
 }

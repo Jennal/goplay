@@ -24,7 +24,7 @@ import (
 	"github.com/jennal/goplay/transfer"
 )
 
-var IDGen = helpers.NewIDGen(math.MaxUint16)
+var IDGen = helpers.NewIDGen(math.MaxUint32)
 
 type Session struct {
 	transfer.IClient
