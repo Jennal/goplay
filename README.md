@@ -1,5 +1,7 @@
 # GoPlay
 
+[![GoDoc](https://godoc.org/github.com/Jennal/goplay?status.svg)](https://godoc.org/github.com/Jennal/goplay)
+
 GoPlay is a framework for game service, written by pure golang.
 
 ## Clients
