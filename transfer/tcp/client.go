@@ -17,8 +17,6 @@ import (
 	"fmt"
 	"net"
 
-	"sync"
-
 	"github.com/jennal/goplay/defaults"
 	"github.com/jennal/goplay/event"
 	"github.com/jennal/goplay/helpers"
@@ -43,8 +41,8 @@ type client struct {
 	isConnected bool
 	id          uint32
 
-	sendMutex sync.Mutex
-	recvMutex sync.Mutex
+	// sendMutex sync.Mutex
+	// recvMutex sync.Mutex
 }
 
 func NewClientWithConnect(conn net.Conn) transfer.IClient {
@@ -144,8 +142,8 @@ func (client *client) Write(buf []byte) (int, error) {
 }
 
 func (client *client) Send(header *pkg.Header, data []byte) error {
-	client.sendMutex.Lock()
-	defer client.sendMutex.Unlock()
+	// client.sendMutex.Lock()
+	// defer client.sendMutex.Unlock()
 
 	header.ContentSize = pkg.PackageSizeType(len(data))
 	headerBuffer, err := header.Marshal()
@@ -161,8 +159,8 @@ func (client *client) Send(header *pkg.Header, data []byte) error {
 }
 
 func (client *client) Recv() (*pkg.Header, []byte, error) {
-	client.recvMutex.Lock()
-	defer client.recvMutex.Unlock()
+	// client.recvMutex.Lock()
+	// defer client.recvMutex.Unlock()
 
 	header := &pkg.Header{}
 	_, err := pkg.ReadHeader(client, header)
