@@ -30,6 +30,11 @@ func NewSessionManager() *SessionManager {
 }
 
 func (self *SessionManager) Add(sess *Session) {
+	if self.Exists(sess) {
+		/* already added */
+		return
+	}
+
 	sess.On(transfer.EVENT_CLIENT_DISCONNECTED, self, func(client transfer.IClient) {
 		self.Remove(sess)
 	})
@@ -53,6 +58,11 @@ func (self *SessionManager) Remove(sess *Session) {
 			delete(self.sessions[sess.ID], sess.ClientID)
 		}
 	}
+}
+
+func (self *SessionManager) Exists(sess *Session) bool {
+	s := self.GetSessionByID(sess.ID, sess.ClientID)
+	return s != nil
 }
 
 func (self *SessionManager) Count() int {
