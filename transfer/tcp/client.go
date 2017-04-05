@@ -135,7 +135,7 @@ func (client *client) Read(buf []byte) (int, error) {
 	n := 0
 
 	for n < size {
-		rn, err := client.conn.Read(buf)
+		rn, err := client.conn.Read(buf[n:])
 		n += rn
 		if err != nil {
 			return n, err
