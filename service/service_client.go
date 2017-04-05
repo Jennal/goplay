@@ -135,16 +135,16 @@ func (s *ServiceClient) setupEventLoop() {
 					default:
 						sess := session.NewSession(s)
 						sess.Bind(s.ID)
-						header, bodyBuf, err := sess.Recv()
+						header, bodyBuf, err := s.Recv()
 						if err != nil {
 							log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
-							sess.Disconnect()
+							s.Disconnect()
 							break Loop
 						}
 
-						if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
-							log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
-						}
+						// if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
+						// 	log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
+						// }
 
 						if (header.Type & pkg.PKG_RPC) == pkg.PKG_RPC {
 							sess.BindClientID(header.ClientID)
