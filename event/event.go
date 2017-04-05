@@ -14,7 +14,6 @@
 package event
 
 import "sync"
-import "github.com/jennal/goplay/aop"
 
 type IEvent interface {
 	On(string, interface{}, EventFunc)
@@ -83,52 +82,59 @@ func (self Event) Once(name string, ins interface{}, cb EventFunc) {
 }
 
 func (self Event) Emit(name string, args ...interface{}) {
+	self.Lock()
 	list, ok := self.cbs[name]
 	if !ok {
+		self.Unlock()
 		return
 	}
 
-	for _, item := range list {
+	copyList := make([]*Method, len(list))
+	copy(copyList, list)
+	self.Unlock()
+
+	for _, item := range copyList {
+		// log.Logf("Emit: %v | %#v", name, item)
 		item.Call(args...)
 	}
 }
 
-func (self Event) EmitParalle(onfinish func(), name string, args ...interface{}) {
-	list, ok := self.cbs[name]
-	if !ok {
-		return
-	}
+// func (self Event) EmitParalle(onfinish func(), name string, args ...interface{}) {
+// 	list, ok := self.cbs[name]
+// 	if !ok {
+// 		return
+// 	}
 
-	funcs := make([]func(complete chan bool), len(list))
-	for i, item := range list {
-		funcs[i] = func(complete chan bool) {
-			item.Call(args...)
-			complete <- true
-		}
-	}
+// 	funcs := make([]func(complete chan bool), len(list))
+// 	for i, item := range list {
+// 		funcs[i] = func(complete chan bool) {
+// 			item.Call(args...)
+// 			complete <- true
+// 		}
+// 	}
 
-	go func() {
-		aop.Parallel(funcs)
-		onfinish()
-	}()
-}
+// 	go func() {
+// 		aop.Parallel(funcs...)
+// 		onfinish()
+// 	}()
+// }
 
-func (self Event) EmitSequence(onfinish func(), name string, args ...interface{}) {
-	list, ok := self.cbs[name]
-	if !ok {
-		return
-	}
+// func (self Event) EmitSequence(onfinish func(), name string, args ...interface{}) {
+// 	list, ok := self.cbs[name]
+// 	if !ok {
+// 		return
+// 	}
 
-	funcs := make([]func(next chan bool, exit chan bool), len(list))
-	for i, item := range list {
-		funcs[i] = func(next chan bool, exit chan bool) {
-			item.Call(args...)
-			next <- true
-		}
-	}
+// 	funcs := make([]func(next chan bool, exit chan bool), len(list))
+// 	for i, item := range list {
+// 		funcs[i] = func(next chan bool, exit chan bool) {
+// 			item.Call(args...)
+// 			next <- true
+// 		}
+// 	}
 
-	go func() {
-		aop.Sequence(funcs)
-		onfinish()
-	}()
-}
+// 	go func() {
+// 		aop.Sequence(funcs...)
+// 		onfinish()
+// 	}()
+// }
