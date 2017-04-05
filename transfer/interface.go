@@ -45,6 +45,9 @@ type IClient interface {
 type IClientDelegate interface {
 	OnConnected(IClient)
 	OnDisconnected(IClient)
+
+	OnSent(IClient, *pkg.Header, []byte)
+	OnRecved(IClient, *pkg.Header, []byte)
 }
 
 type IServer interface {

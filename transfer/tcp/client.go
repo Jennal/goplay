@@ -68,11 +68,15 @@ func NewClient() transfer.IClient {
 func (client *client) RegistDelegate(delegate transfer.IClientDelegate) {
 	client.On(transfer.EVENT_CLIENT_CONNECTED, delegate, delegate.OnConnected)
 	client.On(transfer.EVENT_CLIENT_DISCONNECTED, delegate, delegate.OnDisconnected)
+	client.On(transfer.EVENT_CLIENT_SENT, delegate, delegate.OnSent)
+	client.On(transfer.EVENT_CLIENT_RECVED, delegate, delegate.OnRecved)
 }
 
 func (client *client) UnregistDelegate(delegate transfer.IClientDelegate) {
 	client.Off(transfer.EVENT_CLIENT_CONNECTED, delegate)
 	client.Off(transfer.EVENT_CLIENT_DISCONNECTED, delegate)
+	client.Off(transfer.EVENT_CLIENT_SENT, delegate)
+	client.Off(transfer.EVENT_CLIENT_RECVED, delegate)
 }
 
 func (client *client) LocalAddr() net.Addr {
@@ -122,6 +126,7 @@ func (client *client) Disconnect() error {
 	}
 
 	defer client.Emit(transfer.EVENT_CLIENT_DISCONNECTED, client)
+	// log.Logf("************ Disconnectd: %p => %#v", client, client.Event)
 	client.isConnected = false
 	return client.conn.Close()
 }
@@ -177,6 +182,10 @@ func (client *client) Send(header *pkg.Header, data []byte) error {
 
 	_, err = client.Write(buffer)
 
+	if err == nil {
+		defer client.Emit(transfer.EVENT_CLIENT_SENT, client, header, data)
+	}
+
 	return err
 }
 
@@ -197,9 +206,11 @@ func (client *client) Recv() (*pkg.Header, []byte, error) {
 			return nil, nil, err
 		}
 
+		defer client.Emit(transfer.EVENT_CLIENT_RECVED, client, header, buffer)
 		// fmt.Println("Recv body:", buffer)
 		return header, buffer, err
 	}
 
+	defer client.Emit(transfer.EVENT_CLIENT_RECVED, client, header, nil)
 	return header, nil, nil
 }
