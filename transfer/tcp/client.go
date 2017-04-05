@@ -211,6 +211,6 @@ func (client *client) Recv() (*pkg.Header, []byte, error) {
 		return header, buffer, err
 	}
 
-	defer client.Emit(transfer.EVENT_CLIENT_RECVED, client, header, nil)
+	defer client.Emit(transfer.EVENT_CLIENT_RECVED, client, header, []byte{})
 	return header, nil, nil
 }
