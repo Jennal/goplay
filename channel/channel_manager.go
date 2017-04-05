@@ -21,10 +21,18 @@ type ChannelManager struct {
 	channels map[string]*Channel
 }
 
-func NewChannelManager() *ChannelManager {
-	return &ChannelManager{
-		channels: make(map[string]*Channel),
+var (
+	staticChannelManager *ChannelManager
+)
+
+func GetChannelManager() *ChannelManager {
+	if staticChannelManager == nil {
+		staticChannelManager = &ChannelManager{
+			channels: make(map[string]*Channel),
+		}
 	}
+
+	return staticChannelManager
 }
 
 func (cm *ChannelManager) ChannelNames() []string {

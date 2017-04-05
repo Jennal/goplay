@@ -14,10 +14,13 @@ package channel
 
 import (
 	"fmt"
-
 	"strings"
 
 	"github.com/jennal/goplay/session"
+)
+
+const (
+	CHANNEL_PREFIX = "channel."
 )
 
 type Channel struct {
@@ -39,12 +42,19 @@ func (ch *Channel) Name() string {
 }
 
 func (ch *Channel) Route() string {
-	return fmt.Sprintf("channel.%v", ch.Name())
+	return fmt.Sprintf("%v%v", CHANNEL_PREFIX, ch.Name())
 }
 
 func (ch *Channel) Broadcast(obj interface{}) {
 	route := ch.Route()
 	for _, sess := range ch.Sessions() {
 		sess.Push(route, obj)
+	}
+}
+
+func (ch *Channel) BroadcastRaw(data []byte) {
+	route := ch.Route()
+	for _, sess := range ch.Sessions() {
+		sess.PushRaw(route, data)
 	}
 }

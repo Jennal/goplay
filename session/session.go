@@ -64,14 +64,18 @@ func (s *Session) SetEncoding(e pkg.EncodingType) error {
 }
 
 func (s *Session) Push(route string, data interface{}) error {
+	buf, err := s.Encoder.Marshal(data)
+	if err != nil {
+		return err
+	}
+	return s.PushRaw(route, buf)
+}
+
+func (s *Session) PushRaw(route string, data []byte) error {
 	header := s.NewHeader(pkg.PKG_PUSH, s.Encoding, route)
 	if s.ClientID != 0 {
 		// log.Log("Push: clientId = ", s.ClientID)
 		header = pkg.NewRpcHeader(header, s.ClientID)
 	}
-	buf, err := s.Encoder.Marshal(data)
-	if err != nil {
-		return err
-	}
-	return s.Send(header, buf)
+	return s.Send(header, data)
 }
