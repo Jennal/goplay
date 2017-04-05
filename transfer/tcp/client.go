@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"sync"
 
 	"github.com/jennal/goplay/defaults"
 	"github.com/jennal/goplay/event"
@@ -41,8 +42,8 @@ type client struct {
 	isConnected bool
 	id          uint32
 
-	// sendMutex sync.Mutex
-	// recvMutex sync.Mutex
+	sendMutex sync.Mutex
+	recvMutex sync.Mutex
 }
 
 func NewClientWithConnect(conn net.Conn) transfer.IClient {
@@ -130,7 +131,18 @@ func (client *client) Read(buf []byte) (int, error) {
 		return 0, ERR_READ_BEFORE_CONNECTED
 	}
 
-	return client.conn.Read(buf)
+	size := len(buf)
+	n := 0
+
+	for n < size {
+		rn, err := client.conn.Read(buf)
+		n += rn
+		if err != nil {
+			return n, err
+		}
+	}
+
+	return n, nil
 }
 
 func (client *client) Write(buf []byte) (int, error) {
@@ -138,12 +150,22 @@ func (client *client) Write(buf []byte) (int, error) {
 		return 0, ERR_WRITE_BEFORE_CONNECTED
 	}
 
-	return client.conn.Write(buf)
+	size := len(buf)
+	n := 0
+	for n < size {
+		wn, err := client.conn.Write(buf[n:])
+		n += wn
+		if err != nil {
+			return n, err
+		}
+	}
+
+	return n, nil
 }
 
 func (client *client) Send(header *pkg.Header, data []byte) error {
-	// client.sendMutex.Lock()
-	// defer client.sendMutex.Unlock()
+	client.sendMutex.Lock()
+	defer client.sendMutex.Unlock()
 
 	header.ContentSize = pkg.PackageSizeType(len(data))
 	headerBuffer, err := header.Marshal()
@@ -159,8 +181,8 @@ func (client *client) Send(header *pkg.Header, data []byte) error {
 }
 
 func (client *client) Recv() (*pkg.Header, []byte, error) {
-	// client.recvMutex.Lock()
-	// defer client.recvMutex.Unlock()
+	client.recvMutex.Lock()
+	defer client.recvMutex.Unlock()
 
 	header := &pkg.Header{}
 	_, err := pkg.ReadHeader(client, header)
