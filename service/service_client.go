@@ -43,6 +43,7 @@ type requestCallbacks struct {
 
 type ServiceClient struct {
 	*session.Session
+	sessionManager *session.SessionManager
 
 	router  *router.Router
 	filters []filter.IFilter
@@ -56,7 +57,8 @@ type ServiceClient struct {
 
 func NewServiceClient(cli transfer.IClient) *ServiceClient {
 	result := &ServiceClient{
-		Session: session.NewSession(cli),
+		Session:        session.NewSession(cli),
+		sessionManager: session.NewSessionManager(),
 
 		router: nil,
 		filters: []filter.IFilter{
@@ -133,8 +135,6 @@ func (s *ServiceClient) setupEventLoop() {
 					case <-exitChan:
 						break Loop
 					default:
-						sess := session.NewSession(s)
-						sess.Bind(s.ID)
 						header, bodyBuf, err := s.Recv()
 						if err != nil {
 							log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
@@ -146,8 +146,15 @@ func (s *ServiceClient) setupEventLoop() {
 						// 	log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
 						// }
 
-						if (header.Type & pkg.PKG_RPC) == pkg.PKG_RPC {
+						sess := s.sessionManager.GetSessionByID(s.ID, header.ClientID)
+						if sess == nil {
+							sess = session.NewSession(s)
+							sess.Bind(s.ID)
 							sess.BindClientID(header.ClientID)
+							s.sessionManager.Add(sess)
+						}
+
+						if (header.Type & pkg.PKG_RPC) == pkg.PKG_RPC {
 							s.BindClientID(header.ClientID) /* FIXME: this may not be good enough */
 						}
 
