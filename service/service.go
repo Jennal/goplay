@@ -125,7 +125,7 @@ func (self *Service) RegistNewClient(client transfer.IClient) *ServiceClient {
 
 	serviceClient.Bind(session.IDGen.NextID())
 
-	serviceClient.On(transfer.EVENT_CLIENT_DISCONNECTED, self, func(cli transfer.IClient) {
+	serviceClient.Once(transfer.EVENT_CLIENT_DISCONNECTED, self, func(cli transfer.IClient) {
 		self.clientsMutex.Lock()
 		defer self.clientsMutex.Unlock()
 

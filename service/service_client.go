@@ -211,7 +211,7 @@ func (s *ServiceClient) setupEventLoop() {
 			})
 		}()
 	})
-	s.On(transfer.EVENT_CLIENT_DISCONNECTED, s, func(cli transfer.IClient) {
+	s.Once(transfer.EVENT_CLIENT_DISCONNECTED, s, func(cli transfer.IClient) {
 		exitChan <- 1
 	})
 }

@@ -118,7 +118,7 @@ func (serv *server) Start() error {
 
 			// fmt.Println("New Client:", conn.LocalAddr(), conn.RemoteAddr())
 			client := NewClientWithConnect(conn)
-			client.On(transfer.EVENT_CLIENT_DISCONNECTED, serv, func(c transfer.IClient) {
+			client.Once(transfer.EVENT_CLIENT_DISCONNECTED, serv, func(c transfer.IClient) {
 				serv.clientsMutex.Lock()
 				defer serv.clientsMutex.Unlock()
 

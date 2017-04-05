@@ -42,7 +42,7 @@ func NewHeartBeatManager() *HeartBeatManager {
 }
 
 func (self *HeartBeatManager) OnNewClient(sess *session.Session) bool /* return false to ignore */ {
-	sess.On(transfer.EVENT_CLIENT_DISCONNECTED, self, func(cli transfer.IClient) {
+	sess.Once(transfer.EVENT_CLIENT_DISCONNECTED, self, func(cli transfer.IClient) {
 		self.Lock()
 		defer self.Unlock()
 

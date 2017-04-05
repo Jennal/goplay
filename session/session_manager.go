@@ -35,7 +35,7 @@ func (self *SessionManager) Add(sess *Session) {
 		return
 	}
 
-	sess.On(transfer.EVENT_CLIENT_DISCONNECTED, self, func(client transfer.IClient) {
+	sess.Once(transfer.EVENT_CLIENT_DISCONNECTED, self, func(client transfer.IClient) {
 		self.Remove(sess)
 	})
 
