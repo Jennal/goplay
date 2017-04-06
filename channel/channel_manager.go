@@ -13,6 +13,7 @@
 package channel
 
 import (
+	"strings"
 	"sync"
 )
 
@@ -60,11 +61,12 @@ func (cm *ChannelManager) Channels() map[string]*Channel {
 }
 
 func (cm *ChannelManager) Create(name string) *Channel {
+	name = strings.ToLower(name)
 	ch := NewChannel(name)
 
 	cm.Lock()
 	defer cm.Unlock()
-	cm.channels[name] = ch
+	cm.channels[ch.name] = ch
 
 	return ch
 }
@@ -73,6 +75,7 @@ func (cm *ChannelManager) Get(name string) *Channel {
 	cm.Lock()
 	defer cm.Unlock()
 
+	name = strings.ToLower(name)
 	if ch, ok := cm.channels[name]; ok {
 		return ch
 	}

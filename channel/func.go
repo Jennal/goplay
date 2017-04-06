@@ -15,8 +15,20 @@ package channel
 import "github.com/jennal/goplay/pkg"
 import "strings"
 
-func IsChannel(header *pkg.Header) bool {
+func IsPush(header *pkg.Header) bool {
 	if header.Type&pkg.PKG_PUSH != pkg.PKG_PUSH {
+		return false
+	}
+
+	if !strings.HasPrefix(header.Route, CHANNEL_PREFIX) {
+		return false
+	}
+
+	return true
+}
+
+func IsBroadcast(header *pkg.Header) bool {
+	if header.Type&pkg.PKG_RPC_BROADCAST != pkg.PKG_RPC_BROADCAST {
 		return false
 	}
 

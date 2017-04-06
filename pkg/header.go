@@ -60,8 +60,14 @@ func NewRpcHeader(h *Header, clientId uint32) *Header {
 }
 
 func NewHeaderFromRpc(h *Header) *Header {
+	t := h.Type
+	//For broadcast through backend
+	if t == PKG_RPC_BROADCAST {
+		t = PKG_PUSH
+	}
+
 	return &Header{
-		Type:        h.Type &^ PKG_RPC,
+		Type:        t &^ PKG_RPC,
 		Encoding:    h.Encoding,
 		ID:          h.ID,
 		Status:      h.Status,

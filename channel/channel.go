@@ -14,7 +14,6 @@ package channel
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/jennal/goplay/session"
 )
@@ -29,8 +28,6 @@ type Channel struct {
 }
 
 func NewChannel(name string) *Channel {
-	name = strings.ToLower(name)
-
 	return &Channel{
 		SessionManager: session.NewSessionManager(),
 		name:           name,
@@ -45,6 +42,7 @@ func (ch *Channel) Route() string {
 	return fmt.Sprintf("%v%v", CHANNEL_PREFIX, ch.Name())
 }
 
+//Broadcast direct to client
 func (ch *Channel) Broadcast(obj interface{}) {
 	route := ch.Route()
 	for _, sess := range ch.Sessions() {
@@ -52,9 +50,10 @@ func (ch *Channel) Broadcast(obj interface{}) {
 	}
 }
 
+//Broadcast across backend
 func (ch *Channel) BroadcastRaw(data []byte) {
 	route := ch.Route()
 	for _, sess := range ch.Sessions() {
-		sess.PushRaw(route, data)
+		sess.Broadcast(route, data)
 	}
 }

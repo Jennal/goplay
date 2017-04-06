@@ -79,3 +79,12 @@ func (s *Session) PushRaw(route string, data []byte) error {
 	}
 	return s.Send(header, data)
 }
+
+func (s *Session) Broadcast(route string, data []byte) error {
+	header := s.NewHeader(pkg.PKG_RPC_BROADCAST, s.Encoding, route)
+	if s.ClientID != 0 {
+		// log.Log("Push: clientId = ", s.ClientID)
+		header = pkg.NewRpcHeader(header, s.ClientID)
+	}
+	return s.Send(header, data)
+}
