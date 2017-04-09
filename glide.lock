@@ -1,14 +1,14 @@
-hash: b7d8a5cb2594ea8c243dd1daf0c9c27bc7aa4f9ae18a1ac866a63815bcdac454
-updated: 2017-03-07T10:29:45.6194266+08:00
+hash: 11d7766af5f31f7187956fac4ea68713870c98f1d91b15638c6384296b5fc584
+updated: 2017-04-10T01:11:06.485485645+08:00
 imports:
 - name: github.com/golang/protobuf
-  version: c9c7427a2a70d2eb3bafa0ab2dc163e45f143317
+  version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
+- name: github.com/gorilla/websocket
+  version: a91eba7f97777409bc2c443f5534d41dd20c5720
 - name: github.com/stretchr/testify
   version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
-- name: google.golang.org/grpc
-  version: 708a7f9f3283aa2d4f6132d287d78683babe55c8
 - name: gopkg.in/mgo.v2
   version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
   subpackages:
