@@ -21,9 +21,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/transfer"
 	"github.com/jennal/goplay/transfer/base"
-	"github.com/starx/log"
 )
 
 var upgrader = websocket.Upgrader{
