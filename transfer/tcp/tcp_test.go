@@ -40,6 +40,9 @@ func (self *ServerHandler) OnStarted() {
 func (self *ServerHandler) OnError(err error) {
 	fmt.Println("OnError", err)
 }
+func (self *ServerHandler) OnBeforeStop() {
+	fmt.Println("OnBeforeStop")
+}
 func (self *ServerHandler) OnStopped() {
 	fmt.Println("OnStopped")
 }
@@ -64,7 +67,8 @@ func TestTcp(t *testing.T) {
 	go serv.Start()
 
 	cli := NewClient()
-	cli.Connect("", 8888)
+	err := cli.Connect("", 8888)
+	assert.Nil(t, err)
 
 	header := cli.NewHeader(
 		pkg.PKG_HEARTBEAT,

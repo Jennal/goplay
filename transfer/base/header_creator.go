@@ -15,12 +15,6 @@ package base
 
 import "github.com/jennal/goplay/pkg"
 
-type IHeaderCreator interface {
-	NewHeader(t pkg.PackageType, e pkg.EncodingType, r string) *pkg.Header
-	NewHeartBeatHeader() *pkg.Header
-	NewHeartBeatResponseHeader(h *pkg.Header) *pkg.Header
-}
-
 type HeaderCreator struct {
 	idGen *pkg.IDGen
 }

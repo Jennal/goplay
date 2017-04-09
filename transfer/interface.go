@@ -18,12 +18,17 @@ import (
 
 	"github.com/jennal/goplay/event"
 	"github.com/jennal/goplay/pkg"
-	"github.com/jennal/goplay/transfer/base"
 )
+
+type IHeaderCreator interface {
+	NewHeader(t pkg.PackageType, e pkg.EncodingType, r string) *pkg.Header
+	NewHeartBeatHeader() *pkg.Header
+	NewHeartBeatResponseHeader(h *pkg.Header) *pkg.Header
+}
 
 type IClient interface {
 	event.IEvent
-	base.IHeaderCreator
+	IHeaderCreator
 
 	RegistDelegate(delegate IClientDelegate)
 	UnregistDelegate(delegate IClientDelegate)
