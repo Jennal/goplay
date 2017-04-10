@@ -42,5 +42,6 @@ func NewClient() transfer.IClient {
 }
 
 func (cli *client) CreateConn(host string, port int) (net.Conn, error) {
-	return websocket.DefaultDialer.NetDial("tcp", fmt.Sprintf("%s:%d", host, port))
+	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("%v%v:%v%v", URL_PREFIX, host, port, URL_SUFFIX), nil)
+	return NewConn(conn), err
 }

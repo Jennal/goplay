@@ -13,12 +13,15 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 
+	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/pkg"
-	"github.com/jennal/goplay/service"
 	"github.com/jennal/goplay/session"
-	"github.com/jennal/goplay/transfer/tcp"
+	"github.com/jennal/goplay/transfer"
+	"github.com/jennal/goplay/transfer/websocket"
 )
 
 func init() {
@@ -35,13 +38,31 @@ func (self *Handler) OnStarted() {
 	fmt.Println("Handler-OnStarted")
 }
 
-func (self *Handler) OnStopped() {
-	fmt.Println("Handler-OnStopped")
+func (self *Handler) OnError(err error) {
+	fmt.Println("OnError", err)
 }
 
-func (self *Handler) OnNewClient(sess *session.Session) {
-	fmt.Println("Handler-OnNewClient", sess)
-	sess.Push("test.push", "Hello from Push")
+func (self *Handler) OnBeforeStop() {
+	fmt.Println("OnBeforeStop")
+}
+
+func (self *Handler) OnStopped() {
+	fmt.Println("OnStopped")
+}
+
+func (self *Handler) OnNewClient(cli transfer.IClient) {
+	fmt.Println("Handler-OnNewClient", cli)
+
+	go func() {
+		for {
+			header, body, err := cli.Recv()
+			log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, body, string(body), err)
+			err = cli.Send(header, body)
+			if err != nil {
+				log.Error(err)
+			}
+		}
+	}()
 }
 
 func (self *Handler) Test(sess *session.Session, line string) *pkg.ErrorMessage {
@@ -56,10 +77,13 @@ func (self *Handler) Add(sess *session.Session, n int) (int, *pkg.ErrorMessage) 
 }
 
 func main() {
-	ser := tcp.NewServer("", 9990)
-	serv := service.NewService("test", ser)
+	str := ""
 
-	serv.RegistHanlder(&Handler{})
+	ser := websocket.NewServer("localhost", 9990)
+	ser.RegistDelegate(&Handler{})
+	// serv := service.NewService("test", ser)
+
+	// serv.RegistHanlder(&Handler{})
 
 	err := ser.Start()
 	if err != nil {
@@ -67,22 +91,34 @@ func main() {
 		return
 	}
 	fmt.Println("server started:", ser.Addr())
-	fmt.Scanf("%s", nil)
+	fmt.Scanf("%s", &str)
 
-	cli := tcp.NewClient()
-	client := service.NewServiceClient(cli)
-	client.AddListener("test.push", func(line string) {
-		fmt.Println("[test.push] recv: ", line)
-	})
-	client.Connect("", 9990)
+	cli := websocket.NewClient()
+	cli.Connect("localhost", 9990)
 
-	client.Request("test.handler.add", 1, func(result int) {
-		fmt.Println("[test.handler.add] callback: ", result)
-	}, func(err *pkg.ErrorMessage) {
-		fmt.Println("[test.handler.add] error: ", err)
-	})
+	idGen := pkg.NewIDGen()
+	scanner := bufio.NewScanner(os.Stdin)
+	// fmt.Println(scanner)
+	for scanner.Scan() {
+		// fmt.Println(scanner)
+		buffer := scanner.Text()
+		fmt.Println("Send: ", buffer)
+		cli.Send(pkg.NewHeader(pkg.PKG_NOTIFY, pkg.ENCODING_JSON, idGen, "test.route"), []byte(buffer))
+	}
 
-	client.Notify("test.handler.test", "Hello from Client")
+	// client := service.NewServiceClient(cli)
+	// client.AddListener("test.push", func(line string) {
+	// 	fmt.Println("[test.push] recv: ", line)
+	// })
+	// client.Connect("", 9990)
+
+	// client.Request("test.handler.add", 1, func(result int) {
+	// 	fmt.Println("[test.handler.add] callback: ", result)
+	// }, func(err *pkg.ErrorMessage) {
+	// 	fmt.Println("[test.handler.add] error: ", err)
+	// })
+
+	// client.Notify("test.handler.test", "Hello from Client")
 
 	// data, err := json.Marshal("Hello From Client")
 	// fmt.Println("json encode:", string(data))
@@ -117,7 +153,7 @@ func main() {
 	// 	}
 	// }()
 
-	fmt.Scanf("%s", nil)
-	serv.Stop()
-	fmt.Scanf("%s", nil)
+	// fmt.Scanf("%s", nil)
+	// ser.Stop()
+	// fmt.Scanf("%s", nil)
 }

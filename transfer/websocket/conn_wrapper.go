@@ -17,6 +17,8 @@ import (
 	"net"
 	"time"
 
+	"sync"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -26,6 +28,8 @@ var (
 
 type Conn struct {
 	*websocket.Conn
+	buffer []byte
+	sync.Mutex
 }
 
 func NewConn(conn *websocket.Conn) net.Conn {
@@ -34,8 +38,22 @@ func NewConn(conn *websocket.Conn) net.Conn {
 	}
 }
 
+func (conn *Conn) readFromBuffer(b []byte) (int, error) {
+	conn.Lock()
+	defer conn.Unlock()
+
+	n := copy(b, conn.buffer)
+	conn.buffer = conn.buffer[n:]
+	return n, nil
+}
+
 func (conn *Conn) Read(b []byte) (int, error) {
+	if len(b) <= len(conn.buffer) {
+		return conn.readFromBuffer(b)
+	}
+
 	t, buffer, err := conn.ReadMessage()
+	// log.Log("Read:  ", t, "\t", buffer, "\t", err) //, "\n\t", log.StackTrace(false))
 	if err != nil {
 		return 0, err
 	}
@@ -44,12 +62,15 @@ func (conn *Conn) Read(b []byte) (int, error) {
 		return 0, ERR_WRONG_MESSAGE_TYPE
 	}
 
-	copy(b, buffer)
-	return len(buffer), nil
+	conn.Lock()
+	conn.buffer = append(conn.buffer, buffer...)
+	conn.Unlock()
+	return conn.readFromBuffer(b)
 }
 
 func (conn *Conn) Write(b []byte) (int, error) {
 	err := conn.WriteMessage(websocket.BinaryMessage, b)
+	// log.Log("Write: ", websocket.BinaryMessage, "\t", b, "\t", err) //, "\n\t", log.StackTrace(false))
 	if err != nil {
 		return 0, err
 	}

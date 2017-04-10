@@ -26,6 +26,11 @@ import (
 	"github.com/jennal/goplay/transfer/base"
 )
 
+const (
+	URL_PREFIX = "ws://"
+	URL_SUFFIX = "/ws"
+)
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -46,9 +51,10 @@ func NewServer(host string, port int) transfer.IServer {
 }
 
 func (serv *server) Open() error {
+	log.Log("Open")
 	host := fmt.Sprintf("%s:%d", serv.Host(), serv.Port())
 
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(URL_SUFFIX, func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Error(err)
@@ -59,7 +65,13 @@ func (serv *server) Open() error {
 		serv.clientChan <- client
 	})
 
-	err := http.ListenAndServe(host, nil)
+	log.Log("Open-1")
+	var err error
+	go func() {
+		err = http.ListenAndServe(host, nil)
+	}()
+	log.Log("Open-2")
+	log.Log("ListenAndServe:", err)
 	if err != nil {
 		return err
 	}
@@ -68,6 +80,7 @@ func (serv *server) Open() error {
 }
 
 func (serv *server) Accept() (transfer.IClient, error) {
+	log.Log("Accept")
 	for {
 		select {
 		case cli := <-serv.clientChan:
@@ -76,7 +89,6 @@ func (serv *server) Accept() (transfer.IClient, error) {
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
-
 }
 
 func (serv *server) Close() error {

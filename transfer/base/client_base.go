@@ -20,6 +20,7 @@ import (
 	"github.com/jennal/goplay/defaults"
 	"github.com/jennal/goplay/event"
 	"github.com/jennal/goplay/helpers"
+	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/transfer"
 )
@@ -187,7 +188,7 @@ func (client *Client) Send(header *pkg.Header, data []byte) error {
 		return err
 	}
 	buffer := append(headerBuffer, data...)
-	// log.Logf("Write:\n\theader => %#v\n\tbody => %#v | %v\n", header, data, string(data))
+	log.Logf("Write:\n\theader => %#v\n\tbody => %#v | %v\n", header, data, string(data))
 
 	_, err = client.Write(buffer)
 
@@ -205,9 +206,11 @@ func (client *Client) Recv() (*pkg.Header, []byte, error) {
 	header := &pkg.Header{}
 	_, err := pkg.ReadHeader(client, header)
 	if err != nil {
+		log.Log(err)
 		return nil, nil, err
 	}
 
+	log.Logf("Recv header: %#v", header)
 	if header.ContentSize > 0 {
 		buffer := make([]byte, header.ContentSize)
 		_, err := client.Read(buffer)
@@ -216,7 +219,7 @@ func (client *Client) Recv() (*pkg.Header, []byte, error) {
 		}
 
 		defer client.Emit(transfer.EVENT_CLIENT_RECVED, client, header, buffer)
-		// fmt.Println("Recv body:", buffer)
+		log.Log("Recv body: ", buffer, " | ", string(buffer))
 		return header, buffer, err
 	}
 

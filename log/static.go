@@ -12,6 +12,8 @@
 
 package log
 
+import "runtime"
+
 var defaultLogger = NewLogger("", 4)
 
 //Log logs normal info with a string
@@ -42,4 +44,22 @@ func NewErrorf(format string, args ...interface{}) error {
 //NewError logs error info with a string and return an error with that message
 func NewError(args ...interface{}) error {
 	return defaultLogger.NewError(args...)
+}
+
+func StackTrace(all bool) string {
+	// Reserve 10K buffer at first
+	buf := make([]byte, 10240)
+
+	for {
+		size := runtime.Stack(buf, all)
+		// The size of the buffer may be not enough to hold the stacktrace,
+		// so double the buffer size
+		if size == len(buf) {
+			buf = make([]byte, len(buf)<<1)
+			continue
+		}
+		break
+	}
+
+	return string(buf)
 }
