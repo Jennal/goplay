@@ -58,11 +58,11 @@ func (self *ServerHandler) OnNewClient(client transfer.IClient) {
 	for {
 		header, bodyBuf, err := client.Recv()
 		callIn["Recv"] = true
-		self.t.Log("Recv Error: ", err, header, bodyBuf, string(bodyBuf))
+		self.t.Log("Recv Error: ", err, header, bodyBuf, string(bodyBuf), len(bodyBuf))
 		var obj Message
 		err = encode.GetEncodeDecoder(pkg.ENCODING_JSON).Unmarshal(bodyBuf, &obj)
 		self.t.Log("Decode Error: ", err)
-		self.t.Logf("Recv:\nheader => %#v\nbodyBuf => %v\nmessage => %#v\n", header, bodyBuf, obj)
+		self.t.Logf("Recv:\nheader => %#v\nbodyBuf => %v | %v | %v \nmessage => %#v\n", header, bodyBuf, len(bodyBuf), string(bodyBuf), obj)
 		if err != nil {
 			break
 		}
@@ -105,6 +105,15 @@ func TestWebsocket(t *testing.T) {
 	assert.Nil(t, err, "Encode Error: %v", err)
 	err = cli.Send(header, buf)
 	assert.Nil(t, err)
+
+	//Test Big Data
+	buf = make([]byte, 4095)
+	for i := 0; i < len(buf); i++ {
+		buf[i] = byte(i % 255)
+	}
+	err = cli.Send(header, buf)
+	assert.Nil(t, err)
+
 	time.Sleep(1 * time.Second)
 	serv.Stop()
 
