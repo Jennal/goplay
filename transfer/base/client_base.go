@@ -188,7 +188,7 @@ func (client *Client) Send(header *pkg.Header, data []byte) error {
 		return err
 	}
 	buffer := append(headerBuffer, data...)
-	log.Logf("Write:\n\theader => %#v\n\tbody => %#v | %v\n", header, data, string(data))
+	// log.Logf("Write:\n\theader => %#v\n\tbody => %#v | %v\n", header, data, string(data))
 
 	_, err = client.Write(buffer)
 
@@ -210,7 +210,7 @@ func (client *Client) Recv() (*pkg.Header, []byte, error) {
 		return nil, nil, err
 	}
 
-	log.Logf("Recv header: %#v", header)
+	// log.Logf("Recv header: %#v", header)
 	if header.ContentSize > 0 {
 		buffer := make([]byte, header.ContentSize)
 		_, err := client.Read(buffer)
@@ -219,7 +219,7 @@ func (client *Client) Recv() (*pkg.Header, []byte, error) {
 		}
 
 		defer client.Emit(transfer.EVENT_CLIENT_RECVED, client, header, buffer)
-		log.Log("Recv body: ", buffer, " | ", string(buffer))
+		// log.Log("Recv body: ", buffer, " | ", string(buffer))
 		return header, buffer, err
 	}
 

@@ -142,9 +142,9 @@ func (s *ServiceClient) setupEventLoop() {
 							break Loop
 						}
 
-						// if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
-						// 	log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
-						// }
+						if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
+							log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
+						}
 
 						sess := s.sessionManager.GetSessionByID(s.ID, header.ClientID)
 						if sess == nil {
@@ -279,6 +279,7 @@ func (s *ServiceClient) response(sess *session.Session, header *pkg.Header, resu
 		return err
 	}
 
+	log.Logf("Send:\n\theader => %#v\n\tbody => %#v | %v", respHeader, body, string(body))
 	return sess.Send(&respHeader, body)
 }
 

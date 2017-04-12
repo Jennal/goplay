@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jennal/goplay/aop"
 	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/session"
@@ -54,14 +55,18 @@ func (self *Handler) OnNewClient(cli transfer.IClient) {
 	fmt.Println("Handler-OnNewClient", cli)
 
 	go func() {
-		for {
-			header, body, err := cli.Recv()
-			log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, body, string(body), err)
-			err = cli.Send(header, body)
-			if err != nil {
-				log.Error(err)
+		aop.Recover(func() {
+			for {
+				header, body, err := cli.Recv()
+				log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, body, string(body), err)
+				err = cli.Send(header, body)
+				if err != nil {
+					log.Error(err)
+				}
 			}
-		}
+		}, func(err interface{}) {
+			log.Log(err)
+		})
 	}()
 }
 
