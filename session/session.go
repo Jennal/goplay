@@ -16,6 +16,7 @@ package session
 import (
 	"math"
 
+	"github.com/jennal/goplay/data"
 	"github.com/jennal/goplay/defaults"
 	"github.com/jennal/goplay/encode"
 	"github.com/jennal/goplay/helpers"
@@ -27,6 +28,7 @@ import (
 var IDGen = helpers.NewIDGen(math.MaxUint32)
 
 type Session struct {
+	*data.Map
 	transfer.IClient
 
 	ID       uint32
@@ -37,6 +39,7 @@ type Session struct {
 
 func NewSession(cli transfer.IClient) *Session {
 	return &Session{
+		Map:      data.NewMap(),
 		IClient:  cli,
 		ID:       0,
 		ClientID: 0,
