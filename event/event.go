@@ -35,7 +35,7 @@ func NewEvent() *Event {
 	}
 }
 
-func (self Event) On(name string, ins interface{}, cb EventFunc) {
+func (self *Event) On(name string, ins interface{}, cb EventFunc) {
 	self.Lock()
 	defer self.Unlock()
 
@@ -50,7 +50,7 @@ func (self Event) On(name string, ins interface{}, cb EventFunc) {
 	self.cbs[name] = list
 }
 
-func (self Event) Off(name string, ins interface{}) {
+func (self *Event) Off(name string, ins interface{}) {
 	self.Lock()
 	defer self.Unlock()
 
@@ -74,14 +74,14 @@ func (self Event) Off(name string, ins interface{}) {
 	self.cbs[name] = list
 }
 
-func (self Event) Once(name string, ins interface{}, cb EventFunc) {
+func (self *Event) Once(name string, ins interface{}, cb EventFunc) {
 	self.On(name, ins, func(args ...interface{}) {
 		NewMethod(ins, cb).Call(args...)
 		self.Off(name, ins)
 	})
 }
 
-func (self Event) Emit(name string, args ...interface{}) {
+func (self *Event) Emit(name string, args ...interface{}) {
 	self.Lock()
 	list, ok := self.cbs[name]
 	if !ok {
