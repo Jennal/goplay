@@ -15,6 +15,7 @@ package cmd
 import (
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/transfer"
@@ -22,7 +23,7 @@ import (
 
 func Start(s transfer.IServer) {
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, os.Kill)
+	signal.Notify(c, os.Interrupt, os.Kill, syscall.SIGQUIT, syscall.SIGILL, syscall.SIGABRT, syscall.SIGBUS, syscall.SIGFPE, syscall.SIGSEGV, syscall.SIGTERM)
 
 	err := s.Start()
 	if err != nil {
