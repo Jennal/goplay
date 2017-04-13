@@ -42,6 +42,16 @@ func NewRouter(serverName string) *Router {
 	}
 }
 
+func (r *Router) Routes() []string {
+	list := []string{}
+
+	for route := range r.data {
+		list = append(list, route)
+	}
+
+	return list
+}
+
 func (r *Router) Add(obj interface{}) {
 	tp := reflect.TypeOf(obj)
 	// fmt.Println(tp.NumMethod())
