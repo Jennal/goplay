@@ -14,6 +14,13 @@ GoPlay is a framework for game service, written by pure golang.
 - [Master](https://github.com/Jennal/goplay-master): master manages all servers, and make service cluster
 - [Connector](https://github.com/Jennal/goplay-connector): connector is gate way of client
 
+### Run Cluster Services By Docker
+
+```docker
+docker run --name goplay-master --rm -i -t -p 6812:6812 jennal/goplay-master
+docker run --name goplay-connector --rm -i -t -p 9934:9934 --link goplay-master jennal/goplay-connector --master-host goplay-master
+```
+
 ## Demos
 
 - [GoPlay-Demos](https://github.com/Jennal/goplay-demos)
