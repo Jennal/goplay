@@ -38,20 +38,22 @@ type Service struct {
 	handlers []handler.IHandler
 	filters  []filter.IFilter
 
+	heartBeatManager *heartbeat.HeartBeatManager
+
 	clients      []*ServiceClient
 	clientsMutex sync.Mutex
 }
 
 func NewService(name string, serv transfer.IServer) *Service {
 	instance := &Service{
-		Name:     name,
-		Encoding: defaults.Encoding,
-		IServer:  serv,
-		router:   router.NewRouter(name),
+		Name:             name,
+		Encoding:         defaults.Encoding,
+		IServer:          serv,
+		router:           router.NewRouter(name),
+		heartBeatManager: heartbeat.NewHeartBeatManager(),
 	}
 
 	serv.RegistDelegate(instance)
-	instance.RegistFilter(heartbeat.NewHeartBeatManager())
 
 	return instance
 }
@@ -122,6 +124,7 @@ func (self *Service) RegistNewClient(client transfer.IClient) *ServiceClient {
 	serviceClient.SetEncoding(self.Encoding)
 	serviceClient.SetRouter(self.router)
 	serviceClient.SetFilters(self.filters)
+	serviceClient.SetHeartBeatManager(self.heartBeatManager)
 
 	serviceClient.Bind(session.IDGen.NextID())
 
@@ -144,6 +147,16 @@ func (self *Service) RegistNewClient(client transfer.IClient) *ServiceClient {
 	return serviceClient
 }
 
+func (self *Service) FilterOnNewClient(sess *session.Session) bool {
+	for _, filter := range self.filters {
+		if !filter.OnNewClient(sess) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (self *Service) HandlerOnNewClient(sess *session.Session) {
 	for _, handler := range self.handlers {
 		handler.OnNewClient(sess)
@@ -152,6 +165,9 @@ func (self *Service) HandlerOnNewClient(sess *session.Session) {
 
 func (self *Service) OnNewClient(client transfer.IClient) {
 	serviceClient := self.RegistNewClient(client)
-	self.HandlerOnNewClient(serviceClient.Session)
-	serviceClient.Emit(transfer.EVENT_CLIENT_CONNECTED, client)
+	sess := serviceClient.getSession(serviceClient.ID, client.Id())
+	if self.FilterOnNewClient(sess) {
+		self.HandlerOnNewClient(sess)
+		serviceClient.Emit(transfer.EVENT_CLIENT_CONNECTED, client)
+	}
 }

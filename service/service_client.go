@@ -43,7 +43,8 @@ type requestCallbacks struct {
 
 type ServiceClient struct {
 	*session.Session
-	sessionManager *session.SessionManager
+	sessionManager   *session.SessionManager
+	heartBeatManager filter.IFilter
 
 	router  *router.Router
 	filters []filter.IFilter
@@ -57,17 +58,19 @@ type ServiceClient struct {
 
 func NewServiceClient(cli transfer.IClient) *ServiceClient {
 	result := &ServiceClient{
-		Session:        session.NewSession(cli),
-		sessionManager: session.NewSessionManager(),
+		Session:          session.NewSession(cli),
+		sessionManager:   session.NewSessionManager(),
+		heartBeatManager: heartbeat.NewHeartBeatManager(),
 
-		router: nil,
+		router:  nil,
 		filters: []filter.IFilter{
-			heartbeat.NewHeartBeatManager(),
+		// heartbeat.NewHeartBeatManager(),
 		},
 
 		requestCbs: make(map[pkg.PackageIDType]*requestCallbacks),
 		pushCbs:    make(map[string][]*Method),
 	}
+	result.BindClientID(cli.Id())
 	result.setupEventLoop()
 
 	return result
@@ -83,6 +86,28 @@ func (self *ServiceClient) RegistFilter(filter filter.IFilter) {
 
 func (self *ServiceClient) SetFilters(filters []filter.IFilter) {
 	self.filters = filters
+}
+
+func (self *ServiceClient) SetHeartBeatManager(f filter.IFilter) {
+	self.heartBeatManager = f
+}
+
+func (s *ServiceClient) Connect(host string, port int) error {
+	if err := s.IClient.Connect(host, port); err != nil {
+		return err
+	}
+
+	s.BindClientID(s.IClient.Id())
+	sess := s.getSession(s.ID, s.IClient.Id())
+	if s.filters != nil && len(s.filters) > 0 {
+		for _, filter := range s.filters {
+			if !filter.OnNewClient(sess) {
+				return nil
+			}
+		}
+	}
+
+	return nil
 }
 
 func (s *ServiceClient) checkTimeoutLoop() {
@@ -110,6 +135,19 @@ func (s *ServiceClient) checkTimeoutLoop() {
 	}
 }
 
+func (s *ServiceClient) getSession(id uint32, clientId uint32) *session.Session {
+	sess := s.sessionManager.GetSessionByID(id, clientId)
+	if sess == nil {
+		sess = session.NewSession(s)
+		sess.Bind(s.ID)
+		sess.BindClientID(clientId)
+
+		s.sessionManager.Add(sess)
+	}
+
+	return sess
+}
+
 func (s *ServiceClient) setupEventLoop() {
 	s.AddListener(ON_SERVICE_DOWN, func(ok bool) {
 		// log.Log(ON_SERVICE_DOWN)
@@ -118,12 +156,18 @@ func (s *ServiceClient) setupEventLoop() {
 
 	exitChan := make(chan int, 1)
 	s.On(transfer.EVENT_CLIENT_CONNECTED, s, func(client transfer.IClient) {
-		if s.filters != nil && len(s.filters) > 0 {
-			for _, filter := range s.filters {
-				if !filter.OnNewClient(s.Session) {
-					return
-				}
-			}
+		// sess := s.getSession(s.ID, client.Id())
+		// if s.filters != nil && len(s.filters) > 0 {
+		// 	for _, filter := range s.filters {
+		// 		if !filter.OnNewClient(sess) {
+		// 			return
+		// 		}
+		// 	}
+		// }
+
+		//heart beat
+		if !s.heartBeatManager.OnNewClient(s.Session) {
+			return
 		}
 
 		go s.checkTimeoutLoop()
@@ -146,25 +190,31 @@ func (s *ServiceClient) setupEventLoop() {
 							log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
 						}
 
-						sess := s.sessionManager.GetSessionByID(s.ID, header.ClientID)
+						clientId := header.ClientID
+						if clientId == 0 {
+							clientId = s.ClientID
+						}
+						sess := s.sessionManager.GetSessionByID(s.ID, clientId)
 						if sess == nil {
 							sess = session.NewSession(s)
 							sess.Bind(s.ID)
-							sess.BindClientID(header.ClientID)
-							s.sessionManager.Add(sess)
-						}
+							sess.BindClientID(clientId)
 
-						if (header.Type & pkg.PKG_RPC) == pkg.PKG_RPC {
-							s.BindClientID(header.ClientID) /* FIXME: this may not be good enough */
+							s.sessionManager.Add(sess)
 						}
 
 						//filters
 						if s.filters != nil && len(s.filters) > 0 {
 							for _, filter := range s.filters {
-								if !filter.OnRecv(s.Session, header, bodyBuf) {
+								if !filter.OnRecv(sess, header, bodyBuf) {
 									goto Loop
 								}
 							}
+						}
+
+						//heart beat
+						if !s.heartBeatManager.OnRecv(s.Session, header, bodyBuf) {
+							goto Loop
 						}
 
 						switch header.Type {
