@@ -53,7 +53,7 @@ func (conn *Conn) Read(b []byte) (int, error) {
 	}
 
 	t, buffer, err := conn.ReadMessage()
-	// log.Log("Read:  ", t, "\t", buffer, "\t", err) //, "\n\t", log.StackTrace(false))
+	// log.Log("Read:  ", t, "\t", buffer, " | ", string(buffer), " (", len(buffer), ")\t", err) //, "\n\t", log.StackTrace(false))
 	if err != nil {
 		return 0, err
 	}
@@ -70,7 +70,7 @@ func (conn *Conn) Read(b []byte) (int, error) {
 
 func (conn *Conn) Write(b []byte) (int, error) {
 	err := conn.WriteMessage(websocket.BinaryMessage, b)
-	// log.Log("Write: ", websocket.BinaryMessage, "\t", b, "\t", err) //, "\n\t", log.StackTrace(false))
+	// log.Log("Write: ", websocket.BinaryMessage, "\t", b, " | ", string(b), " (", len(b), ")\t", err) //, "\n\t", log.StackTrace(false))
 	if err != nil {
 		return 0, err
 	}

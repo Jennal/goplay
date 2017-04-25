@@ -165,7 +165,7 @@ func (self *Service) HandlerOnNewClient(sess *session.Session) {
 
 func (self *Service) OnNewClient(client transfer.IClient) {
 	serviceClient := self.RegistNewClient(client)
-	sess := serviceClient.getSession(serviceClient.ID, client.Id())
+	sess := serviceClient.getSession(serviceClient.ID, serviceClient.ClientID)
 	if self.FilterOnNewClient(sess) {
 		self.HandlerOnNewClient(sess)
 		serviceClient.Emit(transfer.EVENT_CLIENT_CONNECTED, client)

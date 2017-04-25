@@ -70,7 +70,7 @@ func NewServiceClient(cli transfer.IClient) *ServiceClient {
 		requestCbs: make(map[pkg.PackageIDType]*requestCallbacks),
 		pushCbs:    make(map[string][]*Method),
 	}
-	result.BindClientID(cli.Id())
+	// result.BindClientID(cli.Id())
 	result.setupEventLoop()
 
 	return result
@@ -97,8 +97,8 @@ func (s *ServiceClient) Connect(host string, port int) error {
 		return err
 	}
 
-	s.BindClientID(s.IClient.Id())
-	sess := s.getSession(s.ID, s.IClient.Id())
+	// s.BindClientID(s.IClient.Id())
+	sess := s.getSession(s.ID, s.ClientID)
 	if s.filters != nil && len(s.filters) > 0 {
 		for _, filter := range s.filters {
 			if !filter.OnNewClient(sess) {
@@ -194,6 +194,7 @@ func (s *ServiceClient) setupEventLoop() {
 						if clientId == 0 {
 							clientId = s.ClientID
 						}
+
 						sess := s.sessionManager.GetSessionByID(s.ID, clientId)
 						if sess == nil {
 							sess = session.NewSession(s)

@@ -188,7 +188,7 @@ func (client *Client) Send(header *pkg.Header, data []byte) error {
 		return err
 	}
 	buffer := append(headerBuffer, data...)
-	// log.Logf("Write:\n\theader => %#v\n\tbody => %#v | %v\n", header, data, string(data))
+	// log.Logf("Write:\n\theader => %#v\n\tbody => %#v | %v\n\tbuffer => %v (%v)\n", header, data, string(data), buffer, len(buffer))
 
 	_, err = client.Write(buffer)
 
