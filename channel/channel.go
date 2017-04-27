@@ -15,6 +15,7 @@ package channel
 import (
 	"fmt"
 
+	"github.com/jennal/goplay/data"
 	"github.com/jennal/goplay/session"
 )
 
@@ -23,12 +24,14 @@ const (
 )
 
 type Channel struct {
+	*data.Map
 	*session.SessionManager
 	name string
 }
 
 func NewChannel(name string) *Channel {
 	return &Channel{
+		Map:            data.NewMap(),
 		SessionManager: session.NewSessionManager(),
 		name:           name,
 	}
