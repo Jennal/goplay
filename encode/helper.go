@@ -18,17 +18,6 @@ import (
 	"github.com/jennal/goplay/pkg"
 )
 
-var encoderMap = map[pkg.EncodingType]EncodeDecoder{
-	pkg.ENCODING_GOB:  Gob{},
-	pkg.ENCODING_JSON: Json{},
-	pkg.ENCODING_BSON: Bson{},
-}
-
-//GetEncodeDecoder gets EncodeDecoder by pkg.EncodingType
-func GetEncodeDecoder(encoding pkg.EncodingType) EncodeDecoder {
-	return encoderMap[encoding]
-}
-
 //UnMarshalHeader decode header from binary data
 func UnMarshalHeader(data []byte) (*pkg.Header, int, error) {
 	header := &pkg.Header{}
