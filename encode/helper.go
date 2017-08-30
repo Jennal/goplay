@@ -18,12 +18,12 @@ import (
 	"github.com/jennal/goplay/pkg"
 )
 
-//UnMarshalHeader decode header from binary data
-func UnMarshalHeader(data []byte) (*pkg.Header, int, error) {
-	header := &pkg.Header{}
-	n, err := pkg.UnmarshalHeader(data, header)
-	return header, n, err
-}
+// //UnMarshalHeader decode header from binary data
+// func UnMarshalHeader(data []byte) (*pkg.Header, int, error) {
+// 	header := &pkg.Header{}
+// 	n, err := pkg.UnmarshalHeader(data, header)
+// 	return header, n, err
+// }
 
 //Marshal encode header and content into binary data
 func Marshal(header *pkg.Header, content interface{}) ([]byte, error) {
@@ -47,12 +47,12 @@ func Marshal(header *pkg.Header, content interface{}) ([]byte, error) {
 }
 
 //Unmarshal decode header and content from binary data
-func Unmarshal(data []byte, header *pkg.Header, content interface{}) error {
-	n, err := pkg.UnmarshalHeader(data, header)
-	if err != nil {
-		return err
-	}
+// func Unmarshal(data []byte, header *pkg.Header, content interface{}) error {
+// 	n, err := pkg.UnmarshalHeader(data, header)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	decoder := GetEncodeDecoder(header.Encoding)
-	return decoder.Unmarshal(data[n:], content)
-}
+// 	decoder := GetEncodeDecoder(header.Encoding)
+// 	return decoder.Unmarshal(data[n:], content)
+// }

@@ -13,7 +13,6 @@
 package pkg
 
 import (
-	"bytes"
 	"io"
 
 	"github.com/jennal/goplay/helpers"
@@ -26,36 +25,42 @@ const (
 )
 
 type Header struct {
-	Type        PackageType
-	Encoding    EncodingType
-	ID          PackageIDType
-	Status      Status
-	ContentSize PackageSizeType
-	Route       string
+	Type         PackageType
+	Encoding     EncodingType
+	ID           PackageIDType
+	Status       Status
+	ContentSize  PackageSizeType
+	Route        string
+	RouteEncoded RouteIndex
 
 	ClientID uint32 /* rpc only */
 }
 
 func NewHeader(t PackageType, e EncodingType, idGen *IDGen, r string) *Header {
-	return &Header{
-		Type:        t,
-		Encoding:    e,
-		ID:          idGen.NextID(),
-		Status:      STAT_OK,
-		ContentSize: 0,
-		Route:       r,
+	header := &Header{
+		Type:         t,
+		Encoding:     e,
+		ID:           idGen.NextID(),
+		Status:       STAT_OK,
+		ContentSize:  0,
+		Route:        r,
+		RouteEncoded: ROUTE_INDEX_NONE,
 	}
+
+	fillIndexRoute(header)
+	return header
 }
 
 func NewRpcHeader(h *Header, clientId uint32) *Header {
 	return &Header{
-		Type:        h.Type | PKG_RPC,
-		Encoding:    h.Encoding,
-		ID:          h.ID,
-		Status:      h.Status,
-		ContentSize: h.ContentSize,
-		Route:       h.Route,
-		ClientID:    clientId,
+		Type:         h.Type | PKG_RPC,
+		Encoding:     h.Encoding,
+		ID:           h.ID,
+		Status:       h.Status,
+		ContentSize:  h.ContentSize,
+		Route:        h.Route,
+		RouteEncoded: h.RouteEncoded,
+		ClientID:     clientId,
 	}
 }
 
@@ -67,18 +72,19 @@ func NewHeaderFromRpc(h *Header) *Header {
 	}
 
 	return &Header{
-		Type:        t &^ PKG_RPC,
-		Encoding:    h.Encoding,
-		ID:          h.ID,
-		Status:      h.Status,
-		ContentSize: h.ContentSize,
-		Route:       h.Route,
-		ClientID:    0,
+		Type:         t &^ PKG_RPC,
+		Encoding:     h.Encoding,
+		ID:           h.ID,
+		Status:       h.Status,
+		ContentSize:  h.ContentSize,
+		Route:        h.Route,
+		RouteEncoded: h.RouteEncoded,
+		ClientID:     0,
 	}
 }
 
 func (self *Header) Marshal() ([]byte, error) {
-	var buffer bytes.Buffer
+	var buffer helpers.Buffer
 
 	buffer.Write([]byte{
 		byte(self.Type),
@@ -86,24 +92,22 @@ func (self *Header) Marshal() ([]byte, error) {
 		byte(self.ID),
 		byte(self.Status),
 	})
-	buf, err := helpers.GetBytes(self.ContentSize)
-	if err != nil {
-		return nil, err
-	}
-	buffer.Write(buf)
+	buffer.WriteUInt16(self.ContentSize)
 
-	buffer.WriteByte(byte(len(self.Route)))
-	buffer.Write([]byte(self.Route))
+	if self.Type&^PKG_RPC == PKG_PUSH {
+		//write original route
+		buffer.WriteByte(byte(len(self.Route)))
+		buffer.Write([]byte(self.Route))
+	} else {
+		//write encoded route
+		buffer.WriteUInt16(self.RouteEncoded)
+	}
 
 	if self.Type&PKG_RPC == PKG_RPC {
-		buf, err := helpers.GetBytes(self.ClientID)
-		if err != nil {
-			return nil, err
-		}
-		buffer.Write(buf)
+		buffer.WriteUInt32(self.ClientID)
 	}
 
-	return buffer.Bytes(), err
+	return buffer.Bytes(), nil
 }
 
 func ReadHeader(reader io.Reader, header *Header) (int, error) {
@@ -113,25 +117,40 @@ func ReadHeader(reader io.Reader, header *Header) (int, error) {
 		return 0, err
 	}
 	// fmt.Println("Header:", err, buffer)
-
-	routeBuf := make([]byte, 1)
-	_, err = reader.Read(routeBuf)
+	n, err := UnmarshalStaticHeader(buffer, header)
 	if err != nil {
-		return 0, err
+		return n, err
 	}
-	buffer = append(buffer, routeBuf...)
-	/* heartbeat/heartbeat_response has no route */
-	if routeBuf[0] > 0 {
-		routeBuf = make([]byte, routeBuf[0])
+	// log.Logf("header = %#v", header)
+
+	buffer = []byte{}
+	if header.Type&^PKG_RPC == PKG_PUSH {
+		routeBuf := make([]byte, 1)
 		_, err = reader.Read(routeBuf)
 		if err != nil {
 			return 0, err
 		}
+		buffer = append(buffer, routeBuf...)
+		/* heartbeat/heartbeat_response has no route */
+		if routeBuf[0] > 0 {
+			routeBuf = make([]byte, routeBuf[0])
+			_, err = reader.Read(routeBuf)
+			if err != nil {
+				return 0, err
+			}
 
+			buffer = append(buffer, routeBuf...)
+		}
+	} else {
+		routeBuf := make([]byte, 2)
+		_, err = reader.Read(routeBuf)
+		if err != nil {
+			return 0, err
+		}
 		buffer = append(buffer, routeBuf...)
 	}
 
-	n, err := UnmarshalHeader(buffer, header)
+	m, err := UnmarshalDynamicHeader(buffer, header)
 	if err != nil {
 		return n, err
 	}
@@ -147,65 +166,142 @@ func ReadHeader(reader io.Reader, header *Header) (int, error) {
 		if err != nil {
 			return 0, err
 		}
+
+		return n + m + INT_BYTE_SIZE, nil
 	}
 
-	return n + INT_BYTE_SIZE, nil
+	return n + m, nil
 }
 
-func UnmarshalHeader(data []byte, header *Header) (int, error) {
+func UnmarshalHeader(buffer []byte, header *Header) (int, error) {
+	n, err := UnmarshalStaticHeader(buffer, header)
+	if err != nil {
+		return n, err
+	}
+	// log.Logf("n = %v", n)
+
+	buffer = buffer[n:]
+	m, err := UnmarshalDynamicHeader(buffer, header)
+	if err != nil {
+		return n + m, err
+	}
+	// log.Logf("m = %v", m)
+
+	buffer = buffer[m:]
+	if header.Type&PKG_RPC == PKG_RPC {
+		header.ClientID, err = helpers.ToUInt32(buffer[:4])
+		if err != nil {
+			return 0, err
+		}
+
+		return n + m + INT_BYTE_SIZE, nil
+	}
+
+	return n + m, nil
+}
+
+func UnmarshalStaticHeader(data []byte, header *Header) (int, error) {
 	if len(data) < HEADER_STATIC_SIZE {
 		return 0, log.NewError("data size < HEADER_STATIC_SIZE")
 	}
 
-	buffer := bytes.NewBuffer(data)
+	readSize := 0
+	buffer := helpers.NewBuffer(data)
 
 	b, err := buffer.ReadByte()
 	if err != nil {
 		return 0, err
 	}
 	header.Type = PackageType(b)
+	readSize += 1
 
 	b, err = buffer.ReadByte()
 	if err != nil {
 		return 0, err
 	}
 	header.Encoding = EncodingType(b)
+	readSize += 1
 
 	b, err = buffer.ReadByte()
 	if err != nil {
 		return 0, err
 	}
 	header.ID = PackageIDType(b)
+	readSize += 1
 
 	b, err = buffer.ReadByte()
 	if err != nil {
 		return 0, err
 	}
 	header.Status = Status(b)
+	readSize += 1
 
-	size, err := helpers.ToUInt16(data[HEADER_STATIC_SIZE-2 : HEADER_STATIC_SIZE])
+	size, err := buffer.ReadUInt16()
 	if err != nil {
 		return 0, err
 	}
 	header.ContentSize = PackageSizeType(size)
+	readSize += 2
 
-	for i := HEADER_STATIC_SIZE - 2; i < HEADER_STATIC_SIZE; i++ {
-		buffer.ReadByte()
-	}
-	b, err = buffer.ReadByte()
-	if err != nil {
-		return 0, err
-	}
-	routeSize := int(b)
+	return readSize, nil
+}
 
-	if routeSize > 0 {
-		route := make([]byte, b)
-		_, err = buffer.Read(route)
+func UnmarshalDynamicHeader(data []byte, header *Header) (int, error) {
+	readSize := 0
+	buffer := helpers.NewBuffer(data)
+
+	if header.Type&^PKG_RPC == PKG_PUSH {
+		b, err := buffer.ReadByte()
 		if err != nil {
 			return 0, err
 		}
-		header.Route = string(route)
+		routeSize := int(b)
+		readSize += 1
+
+		if routeSize > 0 {
+			route := make([]byte, b)
+			_, err = buffer.Read(route)
+			if err != nil {
+				return 0, err
+			}
+			header.Route = string(route)
+			readSize += len(route)
+
+			header.RouteEncoded = ROUTE_INDEX_NONE
+		}
+	} else {
+		r, err := buffer.ReadUInt16()
+		if err != nil {
+			return 0, err
+		}
+		header.RouteEncoded = RouteIndex(r)
+		readSize += 2
+
+		fillStringRoute(header)
+		// log.Logf("index=%v, route=%v", header.RouteEncoded, header.Route)
 	}
 
-	return HEADER_STATIC_SIZE + 1 + routeSize, nil
+	return readSize, nil
+}
+
+func isNeedToEncodeRoute(header *Header) bool {
+	return header.Type&^PKG_RPC == PKG_REQUEST ||
+		header.Type&^PKG_RPC == PKG_NOTIFY ||
+		header.Type&^PKG_RPC == PKG_RESPONSE
+}
+
+func fillIndexRoute(header *Header) {
+	if !isNeedToEncodeRoute(header) {
+		return
+	}
+
+	header.RouteEncoded, _ = HandShakeInstance.GetIndexRoute(header.Route)
+}
+
+func fillStringRoute(header *Header) {
+	if !isNeedToEncodeRoute(header) {
+		return
+	}
+
+	header.Route, _ = HandShakeInstance.GetStringRoute(header.RouteEncoded)
 }

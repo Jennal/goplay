@@ -19,6 +19,7 @@ import (
 	"github.com/jennal/goplay/defaults"
 	"github.com/jennal/goplay/encode"
 	"github.com/jennal/goplay/filter"
+	"github.com/jennal/goplay/filter/handshake"
 	"github.com/jennal/goplay/filter/heartbeat"
 	"github.com/jennal/goplay/handler"
 	"github.com/jennal/goplay/log"
@@ -54,6 +55,7 @@ func NewService(name string, serv transfer.IServer) *Service {
 	}
 
 	serv.RegistDelegate(instance)
+	instance.RegistFilter(handshake.NewHandShakeFilter(instance.router))
 
 	return instance
 }
@@ -120,7 +122,7 @@ func (self *Service) OnStopped() {
 
 func (self *Service) RegistNewClient(client transfer.IClient) *ServiceClient {
 	log.Log("OnNewClient:", client)
-	serviceClient := NewServiceClient(client)
+	serviceClient := createServiceClient(client)
 	serviceClient.SetEncoding(self.Encoding)
 	serviceClient.SetRouter(self.router)
 	serviceClient.SetFilters(self.filters)

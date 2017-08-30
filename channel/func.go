@@ -16,7 +16,7 @@ import "github.com/jennal/goplay/pkg"
 import "strings"
 
 func IsPush(header *pkg.Header) bool {
-	if header.Type&pkg.PKG_PUSH != pkg.PKG_PUSH {
+	if header.Type&^pkg.PKG_RPC != pkg.PKG_PUSH {
 		return false
 	}
 
@@ -28,7 +28,7 @@ func IsPush(header *pkg.Header) bool {
 }
 
 func IsBroadcast(header *pkg.Header) bool {
-	if header.Type&pkg.PKG_RPC_BROADCAST != pkg.PKG_RPC_BROADCAST {
+	if header.Type&^pkg.PKG_RPC != pkg.PKG_RPC_BROADCAST {
 		return false
 	}
 

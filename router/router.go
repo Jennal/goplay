@@ -42,14 +42,25 @@ func NewRouter(serverName string) *Router {
 	}
 }
 
-func (r *Router) Routes() []string {
-	list := []string{}
+func (r *Router) calcRoutesMap() map[string]pkg.RouteIndex {
+	arr := r.GetKeys()
+	m := make(map[string]pkg.RouteIndex)
 
-	for route := range r.data {
-		list = append(list, route)
+	for i, str := range arr {
+		m[str] = pkg.RouteIndex(i + 1)
 	}
 
-	return list
+	return m
+}
+
+func (r *Router) GetKeys() []string {
+	arr := []string{}
+
+	for k := range r.data {
+		arr = append(arr, k)
+	}
+
+	return arr
 }
 
 func (r *Router) Add(obj interface{}) {
@@ -70,6 +81,8 @@ func (r *Router) Add(obj interface{}) {
 
 		r.data[path] = NewMethod(obj, method)
 	}
+
+	pkg.HandShakeInstance.UpdateRoutesMap(r.calcRoutesMap())
 	// fmt.Printf("Router: %#v\n", r.data)
 }
 

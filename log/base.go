@@ -18,6 +18,8 @@ import (
 	"fmt"
 	l "log"
 	"os"
+	"runtime"
+	"strings"
 )
 
 type Logger interface {
@@ -68,18 +70,19 @@ func (logger _logger) Logf(format string, args ...interface{}) {
 
 func (logger _logger) Error(err error) {
 	setStderr()
-	l.Output(logger.depth, logger.prefix+err.Error())
+	l.Output(logger.depth, logger.prefix+err.Error()+"\n"+getStack())
 }
 
 func (logger _logger) Errorf(format string, args ...interface{}) {
 	setStderr()
-	l.Output(logger.depth, logger.prefix+fmt.Sprintf(format, args...))
+	l.Output(logger.depth, logger.prefix+fmt.Sprintf(format, args...)+"\n"+getStack())
 }
 
 func (logger _logger) NewErrorf(format string, args ...interface{}) error {
 	setStderr()
 	err := fmt.Errorf(format, args...)
-	l.Output(logger.depth, logger.prefix+err.Error())
+	l.Output(logger.depth, logger.prefix+err.Error()+"\n"+getStack())
+
 	return err
 }
 
@@ -87,6 +90,39 @@ func (logger _logger) NewError(args ...interface{}) error {
 	setStderr()
 	msg := fmt.Sprint(args...)
 	err := errors.New(msg)
-	l.Output(logger.depth, logger.prefix+err.Error())
+	l.Output(logger.depth, logger.prefix+err.Error()+"\n"+getStack())
+
 	return err
+}
+
+func getStack() string {
+	return ""
+
+	result := ""
+	pc := make([]uintptr, 10)
+	n := runtime.Callers(5, pc)
+	if n == 0 {
+		// No pcs available. Stop now.
+		// This can happen if the first argument to runtime.Callers is large.
+		return result
+	}
+
+	pc = pc[:n] // pass only valid pcs to runtime.CallersFrames
+	frames := runtime.CallersFrames(pc)
+
+	// Loop to get frames.
+	// A fixed number of pcs can expand to an indefinite number of Frames.
+	for {
+		frame, more := frames.Next()
+		if strings.HasPrefix(frame.Function, "runtime.") &&
+			strings.Contains(frame.File, "runtime/") {
+			break
+		}
+		result += fmt.Sprintf("\t=> %s(%s:%d)\n", frame.Function, frame.File, frame.Line)
+		if !more {
+			break
+		}
+	}
+
+	return result
 }

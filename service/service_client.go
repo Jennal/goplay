@@ -22,6 +22,7 @@ import (
 	"github.com/jennal/goplay/aop"
 	"github.com/jennal/goplay/encode"
 	"github.com/jennal/goplay/filter"
+	"github.com/jennal/goplay/filter/handshake"
 	"github.com/jennal/goplay/filter/heartbeat"
 	"github.com/jennal/goplay/helpers"
 	"github.com/jennal/goplay/log"
@@ -56,6 +57,28 @@ type ServiceClient struct {
 	pushCbs      map[string][]*Method
 }
 
+//for server
+func createServiceClient(cli transfer.IClient) *ServiceClient {
+	result := &ServiceClient{
+		Session:          session.NewSession(cli),
+		sessionManager:   session.NewSessionManager(),
+		heartBeatManager: heartbeat.NewHeartBeatManager(),
+
+		router:  nil,
+		filters: []filter.IFilter{
+		// heartbeat.NewHeartBeatManager(),
+		},
+
+		requestCbs: make(map[pkg.PackageIDType]*requestCallbacks),
+		pushCbs:    make(map[string][]*Method),
+	}
+	// result.BindClientID(cli.Id())
+	result.setupEventLoop()
+
+	return result
+}
+
+//for client
 func NewServiceClient(cli transfer.IClient) *ServiceClient {
 	result := &ServiceClient{
 		Session:          session.NewSession(cli),
@@ -72,6 +95,9 @@ func NewServiceClient(cli transfer.IClient) *ServiceClient {
 	}
 	// result.BindClientID(cli.Id())
 	result.setupEventLoop()
+	result.On(transfer.EVENT_CLIENT_CONNECTED, result, func(cli transfer.IClient) {
+		result.sendHandShake()
+	})
 
 	return result
 }
@@ -148,6 +174,19 @@ func (s *ServiceClient) getSession(id uint32, clientId uint32) *session.Session 
 	return sess
 }
 
+func (s *ServiceClient) sendHandShake() {
+	handshake.SendHandShake(s, s.Encoding, s.Encoder, "")
+}
+
+func (s *ServiceClient) getStringRouter(idx pkg.RouteIndex) string {
+	str, ok := pkg.HandShakeInstance.GetStringRoute(idx)
+	if !ok {
+		return ""
+	}
+
+	return str
+}
+
 func (s *ServiceClient) setupEventLoop() {
 	s.AddListener(ON_SERVICE_DOWN, func(ok bool) {
 		// log.Log(ON_SERVICE_DOWN)
@@ -186,9 +225,9 @@ func (s *ServiceClient) setupEventLoop() {
 							break Loop
 						}
 
-						if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
-							log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
-						}
+						// if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
+						// 	log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
+						// }
 
 						clientId := header.ClientID
 						if clientId == 0 {
@@ -248,10 +287,12 @@ func (s *ServiceClient) setupEventLoop() {
 							s.recvPush(header, bodyBuf)
 						case pkg.PKG_RESPONSE, pkg.PKG_RPC_RESPONSE:
 							s.recvResponse(header, bodyBuf)
+						case pkg.PKG_HAND_SHAKE_RESPONSE:
+							s.recvHandShakeResponse(header, bodyBuf)
 						case pkg.PKG_HEARTBEAT, pkg.PKG_HEARTBEAT_RESPONSE:
 							fallthrough
 						default:
-							log.Errorf("Can't reach here!!\n\terr => %v\n\theader => %#v\n\tbody => %#v", err, header, bodyBuf)
+							log.Errorf("Can't reach here!!\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
 							break
 						}
 					}
@@ -383,6 +424,14 @@ func (s *ServiceClient) recvResponse(header *pkg.Header, body []byte) {
 	cbs.failCallback.Call(pkg.NewErrorMessage(
 		pkg.STAT_ERR_DECODE_FAILED,
 		fmt.Sprintf("decode body failed: %#v | %v", body, string(body))))
+}
+
+func (s *ServiceClient) recvHandShakeResponse(header *pkg.Header, body []byte) {
+	// log.Logf("HandShake Response:\n\theader => %#v\n\tbody => %#v | %v", header, body, string(body))
+	encoder := encode.GetEncodeDecoder(header.Encoding)
+	resp := &pkg.HandShakeResponse{}
+	encoder.Unmarshal(body, resp)
+	pkg.HandShakeInstance.UpdateHandShakeResponse(resp)
 }
 
 func (s *ServiceClient) Request(route string, data interface{}, succCb interface{}, failCb func(*pkg.ErrorMessage)) error {

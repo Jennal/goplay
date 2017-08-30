@@ -17,14 +17,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jennal/goplay/consts"
 	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/session"
 )
 
 const (
-	TIMEOUT     time.Duration = 3 * time.Second
-	INTERNAL    time.Duration = 15 * time.Second
+	TIMEOUT     time.Duration = 3000 * time.Millisecond
+	INTERNAL    time.Duration = consts.HeartBeatRate * time.Millisecond
 	MAX_TIMEOUT int           = 3
 )
 
