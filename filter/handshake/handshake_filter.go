@@ -74,6 +74,7 @@ func (self *HandShakeFilter) OnRecv(sess *session.Session, header *pkg.Header, d
 		ServerVersion: consts.Version,
 		Now:           time.Now(),
 		HeartBeatRate: consts.HeartBeatRate,
+		Routes:        nil,
 	}
 
 	//check md5
