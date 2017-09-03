@@ -31,14 +31,12 @@ var (
 )
 
 type Router struct {
-	serverName string
-	data       map[string]*Method
+	data map[string]*Method
 }
 
-func NewRouter(serverName string) *Router {
+func NewRouter() *Router {
 	return &Router{
-		serverName: serverName,
-		data:       make(map[string]*Method),
+		data: make(map[string]*Method),
 	}
 }
 
@@ -63,7 +61,7 @@ func (r *Router) GetKeys() []string {
 	return arr
 }
 
-func (r *Router) Add(obj interface{}) {
+func (r *Router) Add(prefix string, obj interface{}) {
 	tp := reflect.TypeOf(obj)
 	// fmt.Println(tp.NumMethod())
 	for i := 0; i < tp.NumMethod(); i++ {
@@ -73,7 +71,7 @@ func (r *Router) Add(obj interface{}) {
 			continue
 		}
 
-		path := r.getPath(tp, method)
+		path := r.getPath(prefix, tp, method)
 		if _, ok := r.data[path]; ok {
 			log.Errorf("Router.Add: error: path(%v) already exists!", path)
 			continue
@@ -94,9 +92,9 @@ func (r *Router) Get(path string) *Method {
 	return nil
 }
 
-func (r *Router) getPath(t reflect.Type, m reflect.Method) string {
+func (r *Router) getPath(prefix string, t reflect.Type, m reflect.Method) string {
 	return strings.ToLower(fmt.Sprintf("%s.%s.%s",
-		r.serverName,
+		prefix,
 		getStructName(t.String()),
 		m.Name,
 	))

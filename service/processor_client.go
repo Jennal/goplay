@@ -13,6 +13,7 @@
 package service
 
 import (
+	"reflect"
 	"sync"
 	"time"
 
@@ -21,26 +22,21 @@ import (
 	"github.com/jennal/goplay/aop"
 	"github.com/jennal/goplay/encode"
 	"github.com/jennal/goplay/filter"
-	"github.com/jennal/goplay/filter/handshake"
 	"github.com/jennal/goplay/filter/heartbeat"
 	"github.com/jennal/goplay/helpers"
 	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/pkg"
+	"github.com/jennal/goplay/router"
 	"github.com/jennal/goplay/session"
 	"github.com/jennal/goplay/transfer"
 )
 
-type requestCallbacks struct {
-	startTime      time.Time
-	successCallbak *Method
-	failCallback   *Method
-}
-
-type ServiceClient struct {
+type ProcessorClient struct {
 	*session.Session
 	sessionManager   *session.SessionManager
 	heartBeatManager filter.IFilter
 
+	router  *router.Router
 	filters []filter.IFilter
 
 	requestCbsMutex sync.Mutex
@@ -48,25 +44,22 @@ type ServiceClient struct {
 
 	pushCbsMutex sync.Mutex
 	pushCbs      map[string][]*Method
-
-	handShakeChan chan bool
 }
 
-//for client
-func NewServiceClient(cli transfer.IClient) *ServiceClient {
-	result := &ServiceClient{
+//for server
+func NewProcessorClient(cli transfer.IClient) *ProcessorClient {
+	result := &ProcessorClient{
 		Session:          session.NewSession(cli),
 		sessionManager:   session.NewSessionManager(),
 		heartBeatManager: heartbeat.NewHeartBeatManager(),
 
+		router:  nil,
 		filters: []filter.IFilter{
 		// heartbeat.NewHeartBeatManager(),
 		},
 
 		requestCbs: make(map[pkg.PackageIDType]*requestCallbacks),
 		pushCbs:    make(map[string][]*Method),
-
-		handShakeChan: make(chan bool),
 	}
 	// result.BindClientID(cli.Id())
 	result.setupEventLoop()
@@ -74,19 +67,23 @@ func NewServiceClient(cli transfer.IClient) *ServiceClient {
 	return result
 }
 
-func (self *ServiceClient) RegistFilter(filter filter.IFilter) {
+func (self *ProcessorClient) SetRouter(router *router.Router) {
+	self.router = router
+}
+
+func (self *ProcessorClient) RegistFilter(filter filter.IFilter) {
 	self.filters = append(self.filters, filter)
 }
 
-func (self *ServiceClient) SetFilters(filters []filter.IFilter) {
+func (self *ProcessorClient) SetFilters(filters []filter.IFilter) {
 	self.filters = filters
 }
 
-func (self *ServiceClient) SetHeartBeatManager(f filter.IFilter) {
+func (self *ProcessorClient) SetHeartBeatManager(f filter.IFilter) {
 	self.heartBeatManager = f
 }
 
-func (s *ServiceClient) Connect(host string, port int) error {
+func (s *ProcessorClient) Connect(host string, port int) error {
 	if err := s.IClient.Connect(host, port); err != nil {
 		return err
 	}
@@ -101,11 +98,10 @@ func (s *ServiceClient) Connect(host string, port int) error {
 		}
 	}
 
-	<-s.handShakeChan
 	return nil
 }
 
-func (s *ServiceClient) checkTimeoutLoop() {
+func (s *ProcessorClient) checkTimeoutLoop() {
 	for {
 		if !s.IsConnected() {
 			break
@@ -130,7 +126,7 @@ func (s *ServiceClient) checkTimeoutLoop() {
 	}
 }
 
-func (s *ServiceClient) getSession(id uint32, clientId uint32) *session.Session {
+func (s *ProcessorClient) getSession(id uint32, clientId uint32) *session.Session {
 	sess := s.sessionManager.GetSessionByID(id, clientId)
 	if sess == nil {
 		sess = session.NewSession(s)
@@ -143,11 +139,7 @@ func (s *ServiceClient) getSession(id uint32, clientId uint32) *session.Session 
 	return sess
 }
 
-func (s *ServiceClient) sendHandShake() {
-	handshake.SendHandShake(s, s.Encoding, s.Encoder, "")
-}
-
-func (s *ServiceClient) getStringRouter(idx pkg.RouteIndex) string {
+func (s *ProcessorClient) getStringRouter(idx pkg.RouteIndex) string {
 	str, ok := pkg.HandShakeInstance.GetStringRoute(idx)
 	if !ok {
 		return ""
@@ -156,7 +148,7 @@ func (s *ServiceClient) getStringRouter(idx pkg.RouteIndex) string {
 	return str
 }
 
-func (s *ServiceClient) setupEventLoop() {
+func (s *ProcessorClient) setupEventLoop() {
 	s.AddListener(ON_SERVICE_DOWN, func(ok bool) {
 		// log.Log(ON_SERVICE_DOWN)
 		s.Disconnect()
@@ -172,8 +164,6 @@ func (s *ServiceClient) setupEventLoop() {
 		// 		}
 		// 	}
 		// }
-
-		s.sendHandShake()
 
 		//heart beat
 		if !s.heartBeatManager.OnNewClient(s.Session) {
@@ -229,12 +219,35 @@ func (s *ServiceClient) setupEventLoop() {
 						}
 
 						switch header.Type {
+						case pkg.PKG_REQUEST, pkg.PKG_RPC_REQUEST:
+							if s.router != nil {
+								results, err := s.callRouteFunc(sess, header, bodyBuf)
+								if err != nil {
+									log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+									sess.Disconnect()
+									break Loop
+								}
+								// fmt.Printf(" => Loop result: %#v\n", results)
+								err = s.response(sess, header, results)
+								if err != nil {
+									log.Errorf("Response:\n\terr => %v\n\theader => %#v\n\tresults => %#v", err, header, results)
+									sess.Disconnect()
+									break Loop
+								}
+							}
+						case pkg.PKG_NOTIFY, pkg.PKG_RPC_NOTIFY:
+							if s.router != nil {
+								_, err := s.callRouteFunc(sess, header, bodyBuf)
+								if err != nil {
+									log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+									sess.Disconnect()
+									break Loop
+								}
+							}
 						case pkg.PKG_PUSH, pkg.PKG_RPC_PUSH:
 							s.recvPush(header, bodyBuf)
 						case pkg.PKG_RESPONSE, pkg.PKG_RPC_RESPONSE:
 							s.recvResponse(header, bodyBuf)
-						case pkg.PKG_HAND_SHAKE_RESPONSE:
-							s.recvHandShakeResponse(header, bodyBuf)
 						case pkg.PKG_HEARTBEAT, pkg.PKG_HEARTBEAT_RESPONSE:
 							fallthrough
 						default:
@@ -261,7 +274,72 @@ func (s *ServiceClient) setupEventLoop() {
 	})
 }
 
-func (s *ServiceClient) recvPush(header *pkg.Header, body []byte) {
+func (s *ProcessorClient) callRouteFunc(sess *session.Session, header *pkg.Header, bodyBuf []byte) ([]interface{}, error) {
+	/*
+	 * 1. find route func
+	 * 2. unmarshal data
+	 * 3. call route func
+	 */
+	method := s.router.Get(header.Route)
+	if method == nil {
+		return nil, log.NewErrorf("Can't find method with route: %s", header.Route)
+	}
+	val := method.NewArg(2)
+	// fmt.Printf("Service.callRouteFunc: %#v => %v\n", val, reflect.TypeOf(val))
+	decoder := encode.GetEncodeDecoder(header.Encoding)
+	err := decoder.Unmarshal(bodyBuf, val)
+	if err != nil {
+		return nil, log.NewErrorf("Service.callRouteFunc decoder.Unmarshal failed: %v", err)
+	}
+	// fmt.Printf("Service.callRouteFunc: %#v => %v\n", val, reflect.TypeOf(val))
+
+	var result []interface{}
+	aop.Recover(func() {
+		result = method.Call(sess, helpers.GetValueFromPtr(val))
+	}, func(e interface{}) {
+		err = e.(error)
+	})
+
+	return result, err
+}
+
+func (s *ProcessorClient) response(sess *session.Session, header *pkg.Header, results []interface{}) error {
+	respHeader := *header
+	if header.Type == pkg.PKG_RPC_REQUEST {
+		respHeader.Type = pkg.PKG_RPC_RESPONSE
+	} else {
+		respHeader.Type = pkg.PKG_RESPONSE
+	}
+
+	if results == nil || len(results) <= 0 {
+		return sess.Send(&respHeader, []byte{})
+	}
+
+	result := results[0]
+	/* check error != nil */
+	if len(results) == 2 && !reflect.ValueOf(results[1]).IsNil() {
+		// respHeader.Status = pkg.STAT_ERR
+		respHeader.Status = result.(*pkg.ErrorMessage).Code
+		if respHeader.Status == pkg.STAT_OK {
+			log.Errorf("ErrorMessage.Code can't be STAT_OK!")
+			respHeader.Status = pkg.STAT_ERR
+		}
+		result = results[1]
+	}
+
+	// fmt.Println("result:", result)
+
+	encoder := encode.GetEncodeDecoder(header.Encoding)
+	body, err := encoder.Marshal(result)
+	if err != nil {
+		return err
+	}
+
+	log.Logf("Send:\n\theader => %#v\n\tbody => %#v | %v", respHeader, body, string(body))
+	return sess.Send(&respHeader, body)
+}
+
+func (s *ProcessorClient) recvPush(header *pkg.Header, body []byte) {
 	s.pushCbsMutex.Lock()
 	list, ok := s.pushCbs[header.Route]
 	s.pushCbsMutex.Unlock()
@@ -278,7 +356,7 @@ func (s *ServiceClient) recvPush(header *pkg.Header, body []byte) {
 	}
 }
 
-func (s *ServiceClient) recvResponse(header *pkg.Header, body []byte) {
+func (s *ProcessorClient) recvResponse(header *pkg.Header, body []byte) {
 	s.requestCbsMutex.Lock()
 	cbs, ok := s.requestCbs[header.ID]
 	if ok {
@@ -312,51 +390,7 @@ func (s *ServiceClient) recvResponse(header *pkg.Header, body []byte) {
 		fmt.Sprintf("decode body failed: %#v | %v", body, string(body))))
 }
 
-func (s *ServiceClient) recvHandShakeResponse(header *pkg.Header, body []byte) {
-	log.Logf("HandShake Response:\n\theader => %#v\n\tbody => %#v | %v", header, body, string(body))
-	encoder := encode.GetEncodeDecoder(header.Encoding)
-	resp := &pkg.HandShakeResponse{}
-	encoder.Unmarshal(body, resp)
-	pkg.HandShakeInstance.UpdateHandShakeResponse(resp)
-
-	s.handShakeChan <- true
-}
-
-func (s *ServiceClient) Request(route string, data interface{}, succCb interface{}, failCb func(*pkg.ErrorMessage)) error {
-	header := s.NewHeader(pkg.PKG_RPC_REQUEST, s.Encoding, route)
-	header = pkg.NewRpcHeader(header, s.ClientID)
-	cbs := requestCallbacks{
-		successCallbak: NewMethod(succCb),
-		failCallback:   NewMethod(failCb),
-		startTime:      time.Now(),
-	}
-
-	s.requestCbsMutex.Lock()
-	s.requestCbs[header.ID] = &cbs
-	s.requestCbsMutex.Unlock()
-
-	buf, err := s.Encoder.Marshal(data)
-	if err != nil {
-		return err
-	}
-	return s.Send(header, buf)
-}
-
-func (s *ServiceClient) Notify(route string, data interface{}) error {
-	header := s.NewHeader(pkg.PKG_RPC_NOTIFY, s.Encoding, route)
-	header = pkg.NewRpcHeader(header, s.ClientID)
-	buf, err := s.Encoder.Marshal(data)
-	if err != nil {
-		return err
-	}
-	return s.Send(header, buf)
-}
-
-func (s *ServiceClient) Push(route string, data interface{}) error {
-	return s.Session.Push(route, data)
-}
-
-func (s *ServiceClient) AddListener(route string, callback interface{}) {
+func (s *ProcessorClient) AddListener(route string, callback interface{}) {
 	s.pushCbsMutex.Lock()
 	defer s.pushCbsMutex.Unlock()
 

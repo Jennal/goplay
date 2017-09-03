@@ -12,6 +12,9 @@
 
 package service
 
+import "time"
+
 const (
 	ON_SERVICE_DOWN = "ON_SERVICE_DOWN"
+	REQUEST_TIMEOUT = 3 * time.Second
 )

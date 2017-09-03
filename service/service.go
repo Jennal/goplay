@@ -41,7 +41,7 @@ type Service struct {
 
 	heartBeatManager *heartbeat.HeartBeatManager
 
-	clients      []*ServiceClient
+	clients      []*ProcessorClient
 	clientsMutex sync.Mutex
 }
 
@@ -50,7 +50,7 @@ func NewService(name string, serv transfer.IServer) *Service {
 		Name:             name,
 		Encoding:         defaults.Encoding,
 		IServer:          serv,
-		router:           router.NewRouter(name),
+		router:           router.NewRouter(),
 		heartBeatManager: heartbeat.NewHeartBeatManager(),
 	}
 
@@ -72,7 +72,7 @@ func (self *Service) Filters() []filter.IFilter {
 	return self.filters
 }
 
-func (self *Service) ServiceClients() []*ServiceClient {
+func (self *Service) ServiceClients() []*ProcessorClient {
 	return self.clients
 }
 
@@ -86,7 +86,7 @@ func (self *Service) SetEncoding(e pkg.EncodingType) error {
 }
 
 func (self *Service) RegistHanlder(obj handler.IHandler) {
-	self.router.Add(obj)
+	self.router.Add(self.Name, obj)
 	self.handlers = append(self.handlers, obj)
 }
 
@@ -120,9 +120,9 @@ func (self *Service) OnStopped() {
 	}
 }
 
-func (self *Service) RegistNewClient(client transfer.IClient) *ServiceClient {
+func (self *Service) RegistNewClient(client transfer.IClient) *ProcessorClient {
 	log.Log("OnNewClient:", client)
-	serviceClient := createServiceClient(client)
+	serviceClient := NewProcessorClient(client)
 	serviceClient.SetEncoding(self.Encoding)
 	serviceClient.SetRouter(self.router)
 	serviceClient.SetFilters(self.filters)
