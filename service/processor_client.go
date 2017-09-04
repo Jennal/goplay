@@ -186,9 +186,9 @@ func (s *ProcessorClient) setupEventLoop() {
 							break Loop
 						}
 
-						// if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
-						// 	log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
-						// }
+						if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
+							log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
+						}
 
 						clientId := header.ClientID
 						if clientId == 0 {
@@ -318,13 +318,13 @@ func (s *ProcessorClient) response(sess *session.Session, header *pkg.Header, re
 	result := results[0]
 	/* check error != nil */
 	if len(results) == 2 && !reflect.ValueOf(results[1]).IsNil() {
+		result = results[1]
 		// respHeader.Status = pkg.STAT_ERR
 		respHeader.Status = result.(*pkg.ErrorMessage).Code
 		if respHeader.Status == pkg.STAT_OK {
 			log.Errorf("ErrorMessage.Code can't be STAT_OK!")
 			respHeader.Status = pkg.STAT_ERR
 		}
-		result = results[1]
 	}
 
 	// fmt.Println("result:", result)
