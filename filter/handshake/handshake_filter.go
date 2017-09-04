@@ -72,7 +72,7 @@ func (self *HandShakeFilter) OnRecv(sess *session.Session, header *pkg.Header, d
 	routeMap := pkg.HandShakeInstance.RoutesMap()
 	respData := pkg.HandShakeResponse{
 		ServerVersion: consts.Version,
-		Now:           time.Now(),
+		Now:           time.Now().Format("2006-01-02 15:04:05"),
 		HeartBeatRate: consts.HeartBeatRate,
 		Routes:        nil,
 	}

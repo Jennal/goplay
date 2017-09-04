@@ -12,10 +12,6 @@
 
 package pkg
 
-import (
-	"time"
-)
-
 type HandShakeClientData struct {
 	ClientType    string
 	ClientVersion string
@@ -24,7 +20,7 @@ type HandShakeClientData struct {
 
 type HandShakeResponse struct {
 	ServerVersion string
-	Now           time.Time
+	Now           string
 	HeartBeatRate int
 	Routes        map[string]RouteIndex
 }
