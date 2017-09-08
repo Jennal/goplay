@@ -109,17 +109,22 @@ func getStructName(name string) string {
 func isValidMethod(m reflect.Method) bool {
 	/*
 	 * valid method:
+	 * == Request
 	 * func (*handler.IHandler) Method(*session.Session, interface{}) (interface{}, *pkg.ErrorMessage)
-	 * interface of In(2) and Out(0) should not be reflect.Ptr
+	 * func (*handler.IHandler) Method(*session.Session) (interface{}, *pkg.ErrorMessage)
+	 * == Notify
+	 * func (*handler.IHandler) Method(*session.Session, interface{}) *pkg.ErrorMessage
+	 * func (*handler.IHandler) Method(*session.Session) *pkg.ErrorMessage
+	 * interface of In(2) / In(1) and Out(0) should not be reflect.Ptr
 	 */
 
 	/* Args: *handler.IHandler, *session.Session, interface{} */
-	if m.Type.NumIn() != 3 {
+	if m.Type.NumIn() != 2 && m.Type.NumIn() != 3 {
 		// fmt.Println("isValidMethod-1")
 		return false
 	}
 
-	/* Returns: interface{}, *pkg.ErrorMessage */
+	/* Returns: *pkg.ErrorMessage | (interface{}, *pkg.ErrorMessage) */
 	if m.Type.NumOut() != 1 && m.Type.NumOut() != 2 {
 		// fmt.Println("isValidMethod-2")
 		return false
@@ -136,7 +141,7 @@ func isValidMethod(m reflect.Method) bool {
 		return false
 	}
 
-	if m.Type.In(2).Kind() == reflect.Ptr {
+	if m.Type.NumIn() == 3 && m.Type.In(2).Kind() == reflect.Ptr {
 		// fmt.Println("isValidMethod-5")
 		return false
 	}

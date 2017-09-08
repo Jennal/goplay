@@ -90,6 +90,15 @@ func (self *Service) RegistHanlder(obj handler.IHandler) {
 	self.handlers = append(self.handlers, obj)
 }
 
+func (self *Service) RegistHanlderGroup(group map[string][]handler.IHandler) {
+	for name, list := range group {
+		for _, h := range list {
+			self.router.Add(name, h)
+			self.handlers = append(self.handlers, h)
+		}
+	}
+}
+
 func (self *Service) RegistFilter(obj filter.IFilter) {
 	self.filters = append(self.filters, obj)
 }

@@ -38,5 +38,5 @@ func (t PackageType) ToResponse() PackageType {
 		// 	return PKG_RPC_PUSH
 	}
 
-	return 0
+	return t
 }

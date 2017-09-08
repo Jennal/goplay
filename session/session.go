@@ -20,6 +20,7 @@ import (
 	"github.com/jennal/goplay/defaults"
 	"github.com/jennal/goplay/encode"
 	"github.com/jennal/goplay/helpers"
+	"github.com/jennal/goplay/interfaces"
 	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/transfer"
@@ -30,6 +31,7 @@ var IDGen = helpers.NewIDGen(math.MaxUint32)
 type Session struct {
 	*data.Map
 	transfer.IClient
+	interfaces.PackageEncodeDecoder
 
 	ID       uint32
 	ClientID uint32
@@ -48,6 +50,22 @@ func NewSession(cli transfer.IClient) *Session {
 	}
 }
 
+func (s *Session) MarshalData(header *pkg.Header, content interface{}) ([]byte, error) {
+	if encoder := encode.GetEncodeDecoder(header.Encoding); encoder != nil {
+		return encoder.Marshal(content)
+	}
+
+	return nil, log.NewErrorf("can't find encoder with: %v", header.Encoding)
+}
+
+func (s *Session) UnmarshalData(header *pkg.Header, data []byte, content interface{}) error {
+	if encoder := encode.GetEncodeDecoder(header.Encoding); encoder != nil {
+		return encoder.Unmarshal(data, content)
+	}
+
+	return log.NewErrorf("can't find encoder with: %v", header.Encoding)
+}
+
 func (s *Session) Bind(id uint32) {
 	s.ID = id
 }
@@ -64,6 +82,23 @@ func (s *Session) SetEncoding(e pkg.EncodingType) error {
 	}
 
 	return log.NewErrorf("can't find encoder with: %v", e)
+}
+
+func (s *Session) Response(header *pkg.Header, data interface{}) error {
+	buf, err := s.MarshalData(header, data)
+	if err != nil {
+		return err
+	}
+	return s.ResponseRaw(header, buf)
+}
+
+func (s *Session) ResponseRaw(header *pkg.Header, data []byte) error {
+	header.Type = header.Type.ToResponse()
+	if s.ClientID != 0 {
+		// log.Log("Push: clientId = ", s.ClientID)
+		header = pkg.NewRpcHeader(header, s.ClientID)
+	}
+	return s.Send(header, data)
 }
 
 func (s *Session) Push(route string, data interface{}) error {

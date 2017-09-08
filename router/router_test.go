@@ -12,33 +12,71 @@
 
 package router
 
-import "testing"
-import "fmt"
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/jennal/goplay/handler"
+	"github.com/jennal/goplay/pkg"
+	"github.com/jennal/goplay/session"
+)
+
+type test struct {
+	handler.IHandler
+}
+
+func (tt *test) OnStarted()                   {}
+func (tt *test) OnStopped()                   {}
+func (tt *test) OnNewClient(*session.Session) {}
+
+func (tt *test) Add(sess *session.Session, a int) (int, *pkg.ErrorMessage) {
+	fmt.Println("test.Add", a)
+	return a + 1, nil
+}
+
+func (tt *test) Get(sess *session.Session) (int, *pkg.ErrorMessage) {
+	fmt.Println("test.Add")
+	return 100, nil
+}
 
 func TestRouter(t *testing.T) {
-	r := NewRouter("gate")
-	r.Add(r)
+	caller := &test{}
+	r := NewRouter()
+	r.Add("gate", caller)
 	t.Log(len(r.data))
+	assert.Equal(t, 2, len(r.data))
 	for k, v := range r.data {
 		t.Logf("%v, %v, %v", k, v.caller, v.method)
 	}
-}
 
-type test struct {
-}
-
-func (tt *test) Add(a int, b float32) float32 {
-	fmt.Println("test.Add", a, b)
-	return float32(a) + b
+	v, ok := r.data["gate.test.add"]
+	assert.True(t, ok)
+	assert.Equal(t, caller, v.caller)
 }
 
 func TestMethod(t *testing.T) {
-	r := NewRouter("test")
-	r.Add(&test{})
+	r := NewRouter()
+	r.Add("test", &test{})
 	m := r.Get("test.test.add")
-	result := m.Call(1, float32(2.0))
+	assert.NotNil(t, m)
+	result := m.Call(session.NewSession(nil), 1)
 	t.Log(result...)
+	assert.Equal(t, 2, len(result))
+	assert.Equal(t, 2, result[0])
+	assert.Nil(t, result[1])
 	arg := m.NewArg(0)
+	t.Log(arg, reflect.TypeOf(arg))
+
+	m = r.Get("test.test.get")
+	assert.NotNil(t, m)
+	result = m.Call(session.NewSession(nil))
+	t.Log(result...)
+	assert.Equal(t, 2, len(result))
+	assert.Equal(t, 100, result[0])
+	assert.Nil(t, result[1])
+	arg = m.NewArg(0)
 	t.Log(arg, reflect.TypeOf(arg))
 }
