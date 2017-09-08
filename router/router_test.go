@@ -42,6 +42,16 @@ func (tt *test) Get(sess *session.Session) (int, *pkg.ErrorMessage) {
 	return 100, nil
 }
 
+func TestMethodNumIn(t *testing.T) {
+	caller := &test{}
+	r := NewRouter()
+	r.Add("gate", caller)
+
+	for k, v := range r.data {
+		t.Logf("%v, %v, %v, %v", k, v.caller, v.method, v.NumIn())
+	}
+}
+
 func TestRouter(t *testing.T) {
 	caller := &test{}
 	r := NewRouter()

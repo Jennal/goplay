@@ -53,3 +53,7 @@ func (m *Method) NewArg(i int) interface{} {
 	argType := m.method.Type.In(i)
 	return reflect.New(argType).Interface()
 }
+
+func (m *Method) NumIn() int {
+	return m.method.Type.NumIn()
+}

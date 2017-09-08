@@ -284,23 +284,51 @@ func (s *ProcessorClient) callRouteFunc(sess *session.Session, header *pkg.Heade
 	if method == nil {
 		return nil, log.NewErrorf("Can't find method with route: %s", header.Route)
 	}
-	val := method.NewArg(2)
-	// fmt.Printf("Service.callRouteFunc: %#v => %v\n", val, reflect.TypeOf(val))
-	decoder := encode.GetEncodeDecoder(header.Encoding)
-	err := decoder.Unmarshal(bodyBuf, val)
-	if err != nil {
-		return nil, log.NewErrorf("Service.callRouteFunc decoder.Unmarshal failed: %v", err)
+	if method.NumIn() == 2 {
+		var err error
+		var result []interface{}
+		aop.Recover(func() {
+			result = method.Call(sess)
+		}, func(e interface{}) {
+			if e, ok := err.(error); ok {
+				log.Error(e)
+				err = e
+			} else if err != nil {
+				log.Errorf("%#v", err)
+			} else {
+				log.Errorf("%#v", err)
+			}
+		})
+
+		return result, err
+	} else if method.NumIn() == 3 {
+		val := method.NewArg(2)
+		// fmt.Printf("Service.callRouteFunc: %#v => %v\n", val, reflect.TypeOf(val))
+		decoder := encode.GetEncodeDecoder(header.Encoding)
+		err := decoder.Unmarshal(bodyBuf, val)
+		if err != nil {
+			return nil, log.NewErrorf("Service.callRouteFunc decoder.Unmarshal failed: %v", err)
+		}
+		// fmt.Printf("Service.callRouteFunc: %#v => %v\n", val, reflect.TypeOf(val))
+
+		var result []interface{}
+		aop.Recover(func() {
+			result = method.Call(sess, helpers.GetValueFromPtr(val))
+		}, func(e interface{}) {
+			if e, ok := err.(error); ok {
+				log.Error(e)
+				err = e
+			} else if err != nil {
+				log.Errorf("%#v", err)
+			} else {
+				log.Errorf("%#v", err)
+			}
+		})
+
+		return result, err
 	}
-	// fmt.Printf("Service.callRouteFunc: %#v => %v\n", val, reflect.TypeOf(val))
 
-	var result []interface{}
-	aop.Recover(func() {
-		result = method.Call(sess, helpers.GetValueFromPtr(val))
-	}, func(e interface{}) {
-		err = e.(error)
-	})
-
-	return result, err
+	return nil, log.NewError("Service.callRouteFunc can't come to here, must be something wrong")
 }
 
 func (s *ProcessorClient) response(sess *session.Session, header *pkg.Header, results []interface{}) error {
