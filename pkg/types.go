@@ -13,6 +13,7 @@
 //Package pkg defines data structures pass through network
 package pkg
 
+//go:generate stringer -type=Status
 type Status byte
 
 const (
@@ -24,6 +25,7 @@ const (
 	STAT_ERR_EMPTY_RESULT  Status = 0x94
 )
 
+//go:generate stringer -type=PackageType
 type PackageType byte
 
 const (
@@ -45,6 +47,7 @@ const (
 	PKG_RPC_BROADCAST PackageType = PKG_RPC | 0x08
 )
 
+//go:generate stringer -type=EncodingType
 type EncodingType byte
 
 const (
@@ -58,6 +61,7 @@ const (
 type PackageIDType byte
 type PackageSizeType uint16
 
+//go:generate stringer -type=RouteIndex
 type RouteIndex uint16
 
 const (
