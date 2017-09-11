@@ -29,7 +29,8 @@ import (
 )
 
 type HandShakeFilter struct {
-	router *router.Router
+	router      *router.Router
+	reconnectTo *pkg.HostPort
 }
 
 func NewHandShakeFilter(r *router.Router) *HandShakeFilter {
@@ -49,6 +50,10 @@ func SendHandShake(client transfer.IClient, e pkg.EncodingType, encoder encode.E
 	}
 	client.Send(pkg.NewHandShakeHeader(e), buffer)
 	return nil
+}
+
+func (self *HandShakeFilter) SetReconnectTo(data *pkg.HostPort) {
+	self.reconnectTo = data
 }
 
 func (self *HandShakeFilter) OnNewClient(sess *session.Session) bool { /* return false to ignore */
@@ -75,6 +80,17 @@ func (self *HandShakeFilter) OnRecv(sess *session.Session, header *pkg.Header, d
 		Now:           time.Now().Format("2006-01-02 15:04:05"),
 		HeartBeatRate: consts.HeartBeatRate,
 		Routes:        nil,
+
+		IsReconnect: false,
+		ReconnectTo: pkg.HostPort{
+			Host: "",
+			Port: 0,
+		},
+	}
+
+	if self.reconnectTo != nil {
+		respData.IsReconnect = true
+		respData.ReconnectTo = *self.reconnectTo
 	}
 
 	//check md5
@@ -95,7 +111,11 @@ func (self *HandShakeFilter) OnRecv(sess *session.Session, header *pkg.Header, d
 	}
 
 	header.Type = pkg.PKG_HAND_SHAKE_RESPONSE
-	sess.Send(header, encodeRespData)
+	err = sess.Send(header, encodeRespData)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
 
 	return false
 }
