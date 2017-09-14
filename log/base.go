@@ -25,6 +25,8 @@ import (
 type Logger interface {
 	Log(args ...interface{})
 	Logf(format string, args ...interface{})
+	Trace(args ...interface{})
+	Tracef(format string, args ...interface{})
 	Error(err error)
 	Errorf(format string, args ...interface{})
 	NewErrorf(format string, args ...interface{}) error
@@ -68,6 +70,17 @@ func (logger _logger) Logf(format string, args ...interface{}) {
 	l.Output(logger.depth, logger.prefix+fmt.Sprintf(format, args...))
 }
 
+func (logger _logger) Trace(args ...interface{}) {
+	setStdout()
+	line := fmt.Sprint(args...)
+	l.Output(logger.depth, logger.prefix+line+"\n"+getStack())
+}
+
+func (logger _logger) Tracef(format string, args ...interface{}) {
+	setStdout()
+	l.Output(logger.depth, logger.prefix+fmt.Sprintf(format, args...)+"\n"+getStack())
+}
+
 func (logger _logger) Error(err error) {
 	setStderr()
 	l.Output(logger.depth, logger.prefix+err.Error()+"\n"+getStack())
@@ -96,8 +109,8 @@ func (logger _logger) NewError(args ...interface{}) error {
 }
 
 func getStack() string {
-	return ""
-
+	gopath := os.Getenv("GOPATH") + "/src/"
+	gopath = strings.Replace(gopath, "\\", "/", -1) // fix windows slash
 	result := ""
 	pc := make([]uintptr, 10)
 	n := runtime.Callers(5, pc)
@@ -118,7 +131,9 @@ func getStack() string {
 			strings.Contains(frame.File, "runtime/") {
 			break
 		}
-		result += fmt.Sprintf("\t=> %s(%s:%d)\n", frame.Function, frame.File, frame.Line)
+
+		filename := strings.TrimPrefix(frame.File, gopath)
+		result += fmt.Sprintf("\t=> (%s:%d) %s\n", filename, frame.Line, frame.Function)
 		if !more {
 			break
 		}

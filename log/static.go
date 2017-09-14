@@ -26,6 +26,16 @@ func Logf(format string, args ...interface{}) {
 	defaultLogger.Logf(format, args...)
 }
 
+//Trace is Log with stack info
+func Trace(args ...interface{}) {
+	defaultLogger.Trace(args...)
+}
+
+//Tracef is Logf with stack info
+func Tracef(format string, args ...interface{}) {
+	defaultLogger.Tracef(format, args...)
+}
+
 //Error logs error info with an error
 func Error(err error) {
 	defaultLogger.Error(err)
