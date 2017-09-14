@@ -6,6 +6,7 @@ GoPlay is a framework for game service, written by pure golang.
 
 ## Clients
 
+- Unity3d/C#: [GoPlay-Client-Unity3d](https://github.com/Jennal/goplay-client-unity3d)
 - C++: [GoPlay-Client-Cpp](https://github.com/Jennal/goplay-client-cpp)
 - Javascript: [GoPlay-Client-Javascript](https://github.com/Jennal/goplay-client-javascript)
 
