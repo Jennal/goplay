@@ -12,24 +12,38 @@
 
 package event
 
-import "reflect"
+import (
+	"reflect"
+
+	"github.com/jennal/goplay/helpers"
+)
 
 type Method struct {
 	caller interface{}
 	method reflect.Value
+	// stackInfo string
 }
 
 func NewMethod(caller interface{}, method interface{}) *Method {
 	return &Method{
 		caller: caller,
 		method: reflect.ValueOf(method),
+		// stackInfo: log.GetStack(2),
 	}
 }
 
 func (m *Method) Call(args ...interface{}) []interface{} {
 	vals := []reflect.Value{}
+	isAnyIn := m.method.Type().NumIn() == 1 &&
+		m.method.Type().In(0) == reflect.TypeOf(([]interface{})(nil))
 
-	for _, v := range args {
+	for i, v := range args {
+		if mt := m.method.Type().In(i); !isAnyIn &&
+			mt.Kind() != reflect.Ptr &&
+			mt.Kind() != reflect.Interface &&
+			reflect.TypeOf(v).Kind() == reflect.Ptr {
+			v = helpers.GetValueFromPtr(v)
+		}
 		vals = append(vals, reflect.ValueOf(v))
 	}
 

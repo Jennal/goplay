@@ -22,6 +22,10 @@ import (
 	"strings"
 )
 
+const (
+	SKIP = 5
+)
+
 type Logger interface {
 	Log(args ...interface{})
 	Logf(format string, args ...interface{})
@@ -73,28 +77,28 @@ func (logger _logger) Logf(format string, args ...interface{}) {
 func (logger _logger) Trace(args ...interface{}) {
 	setStdout()
 	line := fmt.Sprint(args...)
-	l.Output(logger.depth, logger.prefix+line+"\n"+getStack())
+	l.Output(logger.depth, logger.prefix+line+"\n"+GetStack(5))
 }
 
 func (logger _logger) Tracef(format string, args ...interface{}) {
 	setStdout()
-	l.Output(logger.depth, logger.prefix+fmt.Sprintf(format, args...)+"\n"+getStack())
+	l.Output(logger.depth, logger.prefix+fmt.Sprintf(format, args...)+"\n"+GetStack(5))
 }
 
 func (logger _logger) Error(err error) {
 	setStderr()
-	l.Output(logger.depth, logger.prefix+err.Error()+"\n"+getStack())
+	l.Output(logger.depth, logger.prefix+err.Error()+"\n"+GetStack(5))
 }
 
 func (logger _logger) Errorf(format string, args ...interface{}) {
 	setStderr()
-	l.Output(logger.depth, logger.prefix+fmt.Sprintf(format, args...)+"\n"+getStack())
+	l.Output(logger.depth, logger.prefix+fmt.Sprintf(format, args...)+"\n"+GetStack(5))
 }
 
 func (logger _logger) NewErrorf(format string, args ...interface{}) error {
 	setStderr()
 	err := fmt.Errorf(format, args...)
-	l.Output(logger.depth, logger.prefix+err.Error()+"\n"+getStack())
+	l.Output(logger.depth, logger.prefix+err.Error()+"\n"+GetStack(5))
 
 	return err
 }
@@ -103,17 +107,17 @@ func (logger _logger) NewError(args ...interface{}) error {
 	setStderr()
 	msg := fmt.Sprint(args...)
 	err := errors.New(msg)
-	l.Output(logger.depth, logger.prefix+err.Error()+"\n"+getStack())
+	l.Output(logger.depth, logger.prefix+err.Error()+"\n"+GetStack(5))
 
 	return err
 }
 
-func getStack() string {
+func GetStack(skip int) string {
 	gopath := os.Getenv("GOPATH") + "/src/"
 	gopath = strings.Replace(gopath, "\\", "/", -1) // fix windows slash
 	result := ""
 	pc := make([]uintptr, 10)
-	n := runtime.Callers(5, pc)
+	n := runtime.Callers(skip, pc)
 	if n == 0 {
 		// No pcs available. Stop now.
 		// This can happen if the first argument to runtime.Callers is large.

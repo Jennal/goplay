@@ -23,7 +23,6 @@ import (
 	"github.com/jennal/goplay/filter"
 	"github.com/jennal/goplay/filter/handshake"
 	"github.com/jennal/goplay/filter/heartbeat"
-	"github.com/jennal/goplay/helpers"
 	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/pkg"
 	"github.com/jennal/goplay/session"
@@ -274,7 +273,7 @@ func (s *ServiceClient) recvPush(header *pkg.Header, body []byte) {
 		val := item.NewArg(0)
 		s.Encoder.Unmarshal(body, val)
 		// log.Log("==========>\t", i, "\t", val)
-		item.Call(helpers.GetValueFromPtr(val))
+		item.Call(val)
 	}
 }
 
@@ -295,14 +294,14 @@ func (s *ServiceClient) recvResponse(header *pkg.Header, body []byte) {
 		val := cbs.successCallbak.NewArg(0)
 		err := s.Encoder.Unmarshal(body, val)
 		if err == nil {
-			cbs.successCallbak.Call(helpers.GetValueFromPtr(val))
+			cbs.successCallbak.Call(val)
 			return
 		}
 	} else {
 		val := cbs.failCallback.NewArg(0)
 		err := s.Encoder.Unmarshal(body, val)
 		if err == nil {
-			cbs.failCallback.Call(helpers.GetValueFromPtr(val))
+			cbs.failCallback.Call(val)
 			return
 		}
 	}
