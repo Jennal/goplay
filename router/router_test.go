@@ -42,6 +42,16 @@ func (tt *test) Get(sess *session.Session) (int, *pkg.ErrorMessage) {
 	return 100, nil
 }
 
+func (tt *test) RawValue(sess *session.Session, id *int) (*int, *pkg.ErrorMessage) {
+	fmt.Println("test.RawValue")
+	return id, nil
+}
+
+func (tt *test) RawData(sess *session.Session, header *pkg.Header, data []byte) ([]byte, *pkg.ErrorMessage) {
+	fmt.Println("test.RawData")
+	return data, nil
+}
+
 func TestMethodNumIn(t *testing.T) {
 	caller := &test{}
 	r := NewRouter()
@@ -57,7 +67,7 @@ func TestRouter(t *testing.T) {
 	r := NewRouter()
 	r.Add("gate", caller)
 	t.Log(len(r.data))
-	assert.Equal(t, 2, len(r.data))
+	assert.Equal(t, 4, len(r.data))
 	for k, v := range r.data {
 		t.Logf("%v, %v, %v", k, v.caller, v.method)
 	}
@@ -72,7 +82,7 @@ func TestMethod(t *testing.T) {
 	r.Add("test", &test{})
 	m := r.Get("test.test.add")
 	assert.NotNil(t, m)
-	result := m.Call(session.NewSession(nil), 1)
+	result := m.CallArgs(session.NewSession(nil), 1)
 	t.Log(result...)
 	assert.Equal(t, 2, len(result))
 	assert.Equal(t, 2, result[0])
@@ -82,10 +92,32 @@ func TestMethod(t *testing.T) {
 
 	m = r.Get("test.test.get")
 	assert.NotNil(t, m)
-	result = m.Call(session.NewSession(nil))
+	result = m.CallArgs(session.NewSession(nil))
 	t.Log(result...)
 	assert.Equal(t, 2, len(result))
 	assert.Equal(t, 100, result[0])
+	assert.Nil(t, result[1])
+	arg = m.NewArg(0)
+	t.Log(arg, reflect.TypeOf(arg))
+
+	m = r.Get("test.test.rawvalue")
+	assert.NotNil(t, m)
+	a := 1
+	result = m.CallArgs(session.NewSession(nil), &a)
+	t.Log(result...)
+	assert.Equal(t, 2, len(result))
+	assert.Equal(t, &a, result[0])
+	assert.Nil(t, result[1])
+	arg = m.NewArg(0)
+	t.Log(arg, reflect.TypeOf(arg))
+
+	m = r.Get("test.test.rawdata")
+	assert.NotNil(t, m)
+	data := []byte{1, 2, 3, 4}
+	result = m.CallArgs(session.NewSession(nil), &pkg.Header{}, data)
+	t.Log(result...)
+	assert.Equal(t, 2, len(result))
+	assert.Equal(t, data, result[0])
 	assert.Nil(t, result[1])
 	arg = m.NewArg(0)
 	t.Log(arg, reflect.TypeOf(arg))

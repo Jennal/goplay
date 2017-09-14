@@ -15,6 +15,14 @@ package helpers
 
 import "reflect"
 
+var (
+	TYPE_BYTES = reflect.TypeOf(([]byte)(nil))
+)
+
 func GetValueFromPtr(ptr interface{}) interface{} {
 	return reflect.ValueOf(ptr).Elem().Interface()
+}
+
+func IsBytesType(obj interface{}) bool {
+	return reflect.TypeOf(obj) == TYPE_BYTES
 }

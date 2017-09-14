@@ -284,51 +284,7 @@ func (s *ProcessorClient) callRouteFunc(sess *session.Session, header *pkg.Heade
 	if method == nil {
 		return nil, log.NewErrorf("Can't find method with route: %s", header.Route)
 	}
-	if method.NumIn() == 2 {
-		var err error
-		var result []interface{}
-		aop.Recover(func() {
-			result = method.Call(sess)
-		}, func(e interface{}) {
-			if e, ok := err.(error); ok {
-				log.Error(e)
-				err = e
-			} else if err != nil {
-				log.Errorf("%#v", err)
-			} else {
-				log.Errorf("%#v", err)
-			}
-		})
-
-		return result, err
-	} else if method.NumIn() == 3 {
-		val := method.NewArg(2)
-		// fmt.Printf("Service.callRouteFunc: %#v => %v\n", val, reflect.TypeOf(val))
-		decoder := encode.GetEncodeDecoder(header.Encoding)
-		err := decoder.Unmarshal(bodyBuf, val)
-		if err != nil {
-			return nil, log.NewErrorf("Service.callRouteFunc decoder.Unmarshal failed: %v", err)
-		}
-		// fmt.Printf("Service.callRouteFunc: %#v => %v\n", val, reflect.TypeOf(val))
-
-		var result []interface{}
-		aop.Recover(func() {
-			result = method.Call(sess, helpers.GetValueFromPtr(val))
-		}, func(e interface{}) {
-			if e, ok := err.(error); ok {
-				log.Error(e)
-				err = e
-			} else if err != nil {
-				log.Errorf("%#v", err)
-			} else {
-				log.Errorf("%#v", err)
-			}
-		})
-
-		return result, err
-	}
-
-	return nil, log.NewError("Service.callRouteFunc can't come to here, must be something wrong")
+	return method.Call(sess, header, bodyBuf)
 }
 
 func (s *ProcessorClient) response(sess *session.Session, header *pkg.Header, results []interface{}) error {
@@ -356,11 +312,17 @@ func (s *ProcessorClient) response(sess *session.Session, header *pkg.Header, re
 	}
 
 	// fmt.Println("result:", result)
+	var body []byte
+	var err error
 
-	encoder := encode.GetEncodeDecoder(header.Encoding)
-	body, err := encoder.Marshal(result)
-	if err != nil {
-		return err
+	if helpers.IsBytesType(result) {
+		body = result.([]byte)
+	} else {
+		encoder := encode.GetEncodeDecoder(header.Encoding)
+		body, err = encoder.Marshal(result)
+		if err != nil {
+			return err
+		}
 	}
 
 	log.Logf("Send:\n\theader => %#v\n\tbody => %#v | %v", respHeader, body, string(body))
