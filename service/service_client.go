@@ -338,6 +338,7 @@ func (s *ServiceClient) Request(route string, data interface{}, succCb interface
 	if err != nil {
 		return err
 	}
+
 	return s.Send(header, buf)
 }
 

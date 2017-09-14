@@ -26,3 +26,9 @@ func (self Json) Marshal(obj interface{}) ([]byte, error) {
 func (self Json) Unmarshal(data []byte, content interface{}) error {
 	return json.Unmarshal(data, content)
 }
+
+func NewJson() EncodeDecoder {
+	return &Base{
+		child: Json{},
+	}
+}

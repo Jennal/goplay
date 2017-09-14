@@ -32,3 +32,9 @@ func (self Gob) Unmarshal(data []byte, content interface{}) error {
 	decoder := gob.NewDecoder(buffer)
 	return decoder.Decode(content)
 }
+
+func NewGob() EncodeDecoder {
+	return &Base{
+		child: Gob{},
+	}
+}

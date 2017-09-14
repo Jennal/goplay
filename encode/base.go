@@ -12,21 +12,18 @@
 
 package encode
 
-import "gopkg.in/mgo.v2/bson"
-
-type Bson struct {
+type Base struct {
+	child EncodeDecoder
 }
 
-func (self Bson) Marshal(obj interface{}) ([]byte, error) {
-	return bson.Marshal(obj)
-}
-
-func (self Bson) Unmarshal(data []byte, content interface{}) error {
-	return bson.Unmarshal(data, content)
-}
-
-func NewBson() EncodeDecoder {
-	return &Base{
-		child: Bson{},
+func (b *Base) Marshal(obj interface{}) ([]byte, error) {
+	if obj == nil {
+		return nil, nil
 	}
+
+	return b.child.Marshal(obj)
+}
+
+func (b *Base) Unmarshal(data []byte, content interface{}) error {
+	return b.child.Unmarshal(data, content)
 }

@@ -3,9 +3,9 @@ package encode
 import "github.com/jennal/goplay/pkg"
 
 var encoderMap = map[pkg.EncodingType]EncodeDecoder{
-	pkg.ENCODING_GOB:  Gob{},
-	pkg.ENCODING_JSON: Json{},
-	pkg.ENCODING_BSON: Bson{},
+	pkg.ENCODING_GOB:  NewGob(),
+	pkg.ENCODING_JSON: NewJson(),
+	pkg.ENCODING_BSON: NewBson(),
 }
 
 //Regist new EncodeDecoder

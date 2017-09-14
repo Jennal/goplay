@@ -182,12 +182,21 @@ func (client *Client) Send(header *pkg.Header, data []byte) error {
 	client.sendMutex.Lock()
 	defer client.sendMutex.Unlock()
 
-	header.ContentSize = pkg.PackageSizeType(len(data))
+	if data != nil {
+		header.ContentSize = pkg.PackageSizeType(len(data))
+	} else {
+		header.ContentSize = 0
+	}
+
 	headerBuffer, err := header.Marshal()
 	if err != nil {
 		return err
 	}
-	buffer := append(headerBuffer, data...)
+
+	buffer := headerBuffer
+	if data != nil {
+		buffer = append(buffer, data...)
+	}
 	// log.Logf("Write:\n\theader => %#v\n\tbody => %#v | %v\n\tbuffer => %#v (%v)\n", header, data, string(data), buffer, len(buffer))
 
 	_, err = client.Write(buffer)
