@@ -64,5 +64,8 @@ func (m *Method) NewArg(i int) interface{} {
 	}
 
 	argType := t.In(i)
+	if argType.Kind() == reflect.Ptr {
+		argType = argType.Elem()
+	}
 	return reflect.New(argType).Interface()
 }

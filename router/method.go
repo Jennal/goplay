@@ -37,7 +37,7 @@ func NewMethod(caller interface{}, method reflect.Method) *Method {
 
 func (m *Method) Call(sess *session.Session, header *pkg.Header, data []byte) (result []interface{}, err error) {
 	result = nil
-	err = log.NewError("Method.Call can't come to here, must be something wrong")
+	err = log.NewErrorf("Method.Call can't come to here, must be something wrong, m.NumIn() = %v", m.NumIn())
 
 	if m.NumIn() == 2 {
 		aop.Recover(func() {
@@ -46,8 +46,6 @@ func (m *Method) Call(sess *session.Session, header *pkg.Header, data []byte) (r
 			if e, ok := err.(error); ok {
 				log.Error(e)
 				err = e
-			} else if err != nil {
-				log.Errorf("%#v", err)
 			} else {
 				log.Errorf("%#v", err)
 			}
@@ -56,7 +54,7 @@ func (m *Method) Call(sess *session.Session, header *pkg.Header, data []byte) (r
 		val := m.NewArg(2)
 		// fmt.Printf("Service.callRouteFunc: %#v => %v\n", val, reflect.TypeOf(val))
 		decoder := encode.GetEncodeDecoder(header.Encoding)
-		err := decoder.Unmarshal(data, val)
+		err = decoder.Unmarshal(data, val)
 		if err != nil {
 			return nil, log.NewErrorf("Service.callRouteFunc decoder.Unmarshal failed: %v", err)
 		}
@@ -73,8 +71,6 @@ func (m *Method) Call(sess *session.Session, header *pkg.Header, data []byte) (r
 			if e, ok := err.(error); ok {
 				log.Error(e)
 				err = e
-			} else if err != nil {
-				log.Errorf("%#v", err)
 			} else {
 				log.Errorf("%#v", err)
 			}
@@ -86,8 +82,6 @@ func (m *Method) Call(sess *session.Session, header *pkg.Header, data []byte) (r
 			if e, ok := err.(error); ok {
 				log.Error(e)
 				err = e
-			} else if err != nil {
-				log.Errorf("%#v", err)
 			} else {
 				log.Errorf("%#v", err)
 			}
@@ -122,6 +116,9 @@ func (m *Method) NewArg(i int) interface{} {
 	}
 
 	argType := m.method.Type.In(i)
+	if argType.Kind() == reflect.Ptr {
+		argType = argType.Elem()
+	}
 	return reflect.New(argType).Interface()
 }
 
