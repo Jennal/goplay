@@ -17,6 +17,10 @@ import (
 )
 
 func TestColor(t *testing.T) {
+	t.Log(Info("Info"))
+	t.Log(Trace("Trace"))
+	t.Log(Error("Error"))
+
 	t.Log(Red("Red"))
 	t.Log(Green("Green"))
 	t.Log(Cyan("Cyan"))
@@ -25,6 +29,7 @@ func TestColor(t *testing.T) {
 	t.Log(Magenta("Magenta"))
 	t.Log(Black("Black"))
 	t.Log(White("White"))
+
 	t.Log(HiRed("HiRed"))
 	t.Log(HiGreen("HiGreen"))
 	t.Log(HiCyan("HiCyan"))
