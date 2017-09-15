@@ -16,6 +16,7 @@ package tcp
 import (
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/jennal/goplay/transfer"
 	"github.com/jennal/goplay/transfer/base"
@@ -23,7 +24,7 @@ import (
 
 type server struct {
 	*base.Server
-	listener net.Listener
+	listener *net.TCPListener
 }
 
 func NewServer(host string, port int) transfer.IServer {
@@ -36,7 +37,12 @@ func NewServer(host string, port int) transfer.IServer {
 
 func (serv *server) Open() error {
 	host := fmt.Sprintf("%s:%d", serv.Host(), serv.Port())
-	ln, err := net.Listen("tcp", host)
+	laddr, err := net.ResolveTCPAddr("tcp", host)
+	if err != nil {
+		return err
+	}
+
+	ln, err := net.ListenTCP("tcp", laddr)
 	if err != nil {
 		return err
 	}
@@ -46,6 +52,7 @@ func (serv *server) Open() error {
 }
 
 func (serv *server) Accept() (transfer.IClient, error) {
+	serv.listener.SetDeadline(time.Now().Add(time.Second))
 	conn, err := serv.listener.Accept()
 	if err != nil {
 		return nil, err

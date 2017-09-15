@@ -39,7 +39,8 @@ type Server struct {
 	clients      map[uint32]transfer.IClient
 	clientsMutex sync.Mutex
 
-	impl IServerImplement
+	exitChan chan bool
+	impl     IServerImplement
 }
 
 func NewServer(host string, port int) *Server {
@@ -49,6 +50,7 @@ func NewServer(host string, port int) *Server {
 		port:      port,
 		clients:   make(map[uint32]transfer.IClient),
 		isStarted: false,
+		exitChan:  make(chan bool),
 	}
 }
 
@@ -116,32 +118,43 @@ func (serv *Server) Start() error {
 	serv.isStarted = true
 
 	go func() {
+	Loop:
 		for {
-			client, err := serv.impl.Accept()
-			if err != nil {
-				serv.Emit(transfer.EVENT_SERVER_ERROR, err)
-				serv.Stop()
+			select {
+			case <-serv.exitChan:
 				return
-			}
+			default:
 
-			// fmt.Println("New Client:", conn.LocalAddr(), conn.RemoteAddr())
-			client.Once(transfer.EVENT_CLIENT_DISCONNECTED, serv, func(c transfer.IClient) {
-				serv.clientsMutex.Lock()
-				defer serv.clientsMutex.Unlock()
-
-				//remove from serv.clients
-				for _, cli := range serv.clients {
-					if c == cli {
-						delete(serv.clients, cli.Id())
-						return
+				client, err := serv.impl.Accept()
+				if err != nil {
+					if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
+						continue Loop
 					}
-				}
-			})
-			serv.clientsMutex.Lock()
-			serv.clients[client.Id()] = client
-			serv.clientsMutex.Unlock()
 
-			serv.Emit(transfer.EVENT_SERVER_NEW_CLIENT, client)
+					serv.Emit(transfer.EVENT_SERVER_ERROR, err)
+					serv.Stop()
+					return
+				}
+
+				// fmt.Println("New Client:", conn.LocalAddr(), conn.RemoteAddr())
+				client.Once(transfer.EVENT_CLIENT_DISCONNECTED, serv, func(c transfer.IClient) {
+					serv.clientsMutex.Lock()
+					defer serv.clientsMutex.Unlock()
+
+					//remove from serv.clients
+					for _, cli := range serv.clients {
+						if c == cli {
+							delete(serv.clients, cli.Id())
+							return
+						}
+					}
+				})
+				serv.clientsMutex.Lock()
+				serv.clients[client.Id()] = client
+				serv.clientsMutex.Unlock()
+
+				serv.Emit(transfer.EVENT_SERVER_NEW_CLIENT, client)
+			}
 		}
 	}()
 
@@ -157,5 +170,6 @@ func (serv *Server) Stop() error {
 	serv.Emit(transfer.EVENT_SERVER_BEFORE_STOP)
 	defer serv.Emit(transfer.EVENT_SERVER_STOPPED)
 	serv.isStarted = false
+	serv.exitChan <- true
 	return serv.impl.Close()
 }

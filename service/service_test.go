@@ -255,3 +255,14 @@ func TestService(t *testing.T) {
 // 	assert.Equal(t, client.LocalAddr(), serv.clients[0].RemoteAddr())
 
 // }
+
+func TestStartStop(t *testing.T) {
+	ser := tcp.NewServer("", PORT+1)
+	serv := NewService("test", ser)
+	serv.SetEncoding(Encoding)
+
+	err := serv.Start()
+	assert.Nil(t, err, "servive.Start() error: %v", err)
+	err = serv.Stop()
+	assert.Nil(t, err, "servive.Stop() error: %v", err)
+}
