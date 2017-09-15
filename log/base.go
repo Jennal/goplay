@@ -29,9 +29,9 @@ const (
 )
 
 var (
-	INFO  = color.Cyan("[Info] ")
-	TRACE = color.Yellow("[Trace] ")
-	ERROR = color.Red("[Error] ")
+	INFO  = color.Info("[Info] ")
+	TRACE = color.Trace("[Trace] ")
+	ERROR = color.Error("[Error] ")
 )
 
 type Logger interface {

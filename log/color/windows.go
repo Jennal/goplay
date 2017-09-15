@@ -18,6 +18,10 @@ func echo(str string) string {
 	return str
 }
 
+var Info = echo
+var Trace = echo
+var Error = echo
+
 var Red = echo
 var Green = echo
 var Cyan = echo
