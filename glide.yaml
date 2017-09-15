@@ -8,3 +8,5 @@ import:
 - package: gopkg.in/mgo.v2
   subpackages:
   - bson
+- package: github.com/fatih/color
+  version: ^1.5.0
