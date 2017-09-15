@@ -16,6 +16,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/jennal/goplay/aop"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,5 +32,10 @@ func TestLog(t *testing.T) {
 	assert.Error(t, err)
 	err = NewErrorf("%v-%v", "err", 3)
 	assert.Error(t, err)
-	RecoverErrorf("%v-%v", "err", 4)
+
+	aop.Recover(func() {
+		panic("Hello")
+	}, func(err interface{}) {
+		RecoverErrorf("%v-%v: %v", "err", 4, err)
+	})
 }

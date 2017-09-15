@@ -153,8 +153,10 @@ func GetStack(skip int) string {
 			break
 		}
 
-		filename := strings.TrimPrefix(frame.File, gopath)
-		result += fmt.Sprintf("\t=> (%s:%d) %s\n", filename, frame.Line, frame.Function)
+		filename := color.Blue(strings.TrimPrefix(frame.File, gopath))
+		line := color.Cyan(fmt.Sprint(frame.Line))
+		function := color.Magenta(frame.Function)
+		result += fmt.Sprintf("\t=> (%v:%v) %v\n", filename, line, function)
 		if !more {
 			break
 		}
