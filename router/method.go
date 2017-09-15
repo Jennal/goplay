@@ -37,12 +37,11 @@ func NewMethod(caller interface{}, method reflect.Method) *Method {
 
 func (m *Method) Call(sess *session.Session, header *pkg.Header, data []byte) (result []interface{}, err error) {
 	result = nil
-	err = log.NewErrorf("Method.Call can't come to here, must be something wrong, m.NumIn() = %v", m.NumIn())
+	err = nil
 
 	if m.NumIn() == 2 {
 		aop.Recover(func() {
 			result = m.CallArgs(sess)
-			err = nil
 		}, func(e interface{}) {
 			if e, ok := err.(error); ok {
 				log.Error(e)
@@ -68,7 +67,6 @@ func (m *Method) Call(sess *session.Session, header *pkg.Header, data []byte) (r
 
 		aop.Recover(func() {
 			result = m.CallArgs(sess, arg2)
-			err = nil
 		}, func(e interface{}) {
 			if e, ok := err.(error); ok {
 				log.Error(e)
@@ -80,7 +78,6 @@ func (m *Method) Call(sess *session.Session, header *pkg.Header, data []byte) (r
 	} else if m.NumIn() == 4 {
 		aop.Recover(func() {
 			result = m.CallArgs(sess, header, data)
-			err = nil
 		}, func(e interface{}) {
 			if e, ok := err.(error); ok {
 				log.Error(e)
@@ -91,6 +88,11 @@ func (m *Method) Call(sess *session.Session, header *pkg.Header, data []byte) (r
 		})
 	}
 
+	if result != nil {
+		return
+	}
+
+	err = log.NewErrorf("Method.Call can't come to here, must be something wrong, m.NumIn() = %v", m.NumIn())
 	return result, err
 }
 
