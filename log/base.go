@@ -28,6 +28,12 @@ const (
 	SKIP = 5
 )
 
+var (
+	INFO  = color.Cyan("[Info] ")
+	TRACE = color.Yellow("[Trace] ")
+	ERROR = color.Red("[Error] ")
+)
+
 type Logger interface {
 	Log(args ...interface{})
 	Logf(format string, args ...interface{})
@@ -70,39 +76,39 @@ func NewLogger(prefix string, depth int) Logger {
 func (logger _logger) Log(args ...interface{}) {
 	setStdout()
 	line := fmt.Sprint(args...)
-	l.Output(logger.depth, logger.prefix+line)
+	l.Output(logger.depth, INFO+logger.prefix+line)
 }
 
 func (logger _logger) Logf(format string, args ...interface{}) {
 	setStdout()
-	l.Output(logger.depth, logger.prefix+fmt.Sprintf(format, args...))
+	l.Output(logger.depth, INFO+logger.prefix+fmt.Sprintf(format, args...))
 }
 
 func (logger _logger) Trace(args ...interface{}) {
 	setStdout()
 	line := fmt.Sprint(args...)
-	l.Output(logger.depth, logger.prefix+line+"\n"+GetStack(5))
+	l.Output(logger.depth, TRACE+logger.prefix+line+"\n"+GetStack(5))
 }
 
 func (logger _logger) Tracef(format string, args ...interface{}) {
 	setStdout()
-	l.Output(logger.depth, logger.prefix+fmt.Sprintf(format, args...)+"\n"+GetStack(5))
+	l.Output(logger.depth, TRACE+logger.prefix+fmt.Sprintf(format, args...)+"\n"+GetStack(5))
 }
 
 func (logger _logger) Error(err error) {
 	setStderr()
-	l.Output(logger.depth, logger.prefix+err.Error()+"\n"+GetStack(5))
+	l.Output(logger.depth, ERROR+logger.prefix+color.HiRed(err.Error())+"\n"+GetStack(5))
 }
 
 func (logger _logger) Errorf(format string, args ...interface{}) {
 	setStderr()
-	l.Output(logger.depth, logger.prefix+fmt.Sprintf(format, args...)+"\n"+GetStack(5))
+	l.Output(logger.depth, ERROR+logger.prefix+color.HiRed(fmt.Sprintf(format, args...))+"\n"+GetStack(5))
 }
 
 func (logger _logger) NewErrorf(format string, args ...interface{}) error {
 	setStderr()
 	err := fmt.Errorf(format, args...)
-	l.Output(logger.depth, logger.prefix+err.Error()+"\n"+GetStack(5))
+	l.Output(logger.depth, ERROR+logger.prefix+color.HiRed(err.Error())+"\n"+GetStack(5))
 
 	return err
 }
@@ -111,14 +117,14 @@ func (logger _logger) NewError(args ...interface{}) error {
 	setStderr()
 	msg := fmt.Sprint(args...)
 	err := errors.New(msg)
-	l.Output(logger.depth, logger.prefix+err.Error()+"\n"+GetStack(5))
+	l.Output(logger.depth, ERROR+logger.prefix+color.HiRed(err.Error())+"\n"+GetStack(5))
 
 	return err
 }
 
 func (logger _logger) RecoverErrorf(format string, args ...interface{}) {
 	setStderr()
-	l.Output(logger.depth, logger.prefix+color.Red("recover from panic: ")+fmt.Sprintf(format, args...)+"\n"+GetStack(9))
+	l.Output(logger.depth, ERROR+logger.prefix+"recover from panic: "+color.HiRed(fmt.Sprintf(format, args...))+"\n"+GetStack(9))
 }
 
 func GetStack(skip int) string {
