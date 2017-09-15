@@ -17,9 +17,9 @@ package color
 
 import "github.com/fatih/color"
 
-var Info = color.New(color.Cyan, color.Bold).SprintFunc()
-var Trace = color.New(color.Yellow, color.Bold).SprintFunc()
-var Error = color.New(color.Red, color.Bold).SprintFunc()
+var Info = color.New(color.FgCyan, color.Bold).SprintFunc()
+var Trace = color.New(color.FgYellow, color.Bold).SprintFunc()
+var Error = color.New(color.FgRed, color.Bold).SprintFunc()
 
 var Red = color.New(color.FgRed).SprintFunc()
 var Green = color.New(color.FgGreen).SprintFunc()
