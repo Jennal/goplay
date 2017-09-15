@@ -35,6 +35,8 @@ type Logger interface {
 	Errorf(format string, args ...interface{})
 	NewErrorf(format string, args ...interface{}) error
 	NewError(args ...interface{}) error
+
+	RecoverErrorf(format string, args ...interface{})
 }
 
 func setStdout() {
@@ -112,6 +114,11 @@ func (logger _logger) NewError(args ...interface{}) error {
 	return err
 }
 
+func (logger _logger) RecoverErrorf(format string, args ...interface{}) {
+	setStderr()
+	l.Output(logger.depth, logger.prefix+fmt.Sprintf(format, args...)+"\n"+GetStack(8))
+}
+
 func GetStack(skip int) string {
 	gopath := os.Getenv("GOPATH") + "/src/"
 	gopath = strings.Replace(gopath, "\\", "/", -1) // fix windows slash
@@ -132,6 +139,8 @@ func GetStack(skip int) string {
 	for {
 		frame, more := frames.Next()
 		if strings.HasPrefix(frame.Function, "runtime.") &&
+			!strings.HasPrefix(frame.Function, "runtime.call") &&
+			!strings.HasPrefix(frame.Function, "runtime.gopanic") &&
 			strings.Contains(frame.File, "runtime/") {
 			break
 		}

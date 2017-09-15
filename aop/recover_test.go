@@ -12,17 +12,23 @@
 
 package aop
 
-import "github.com/jennal/goplay/log"
+import (
+	"fmt"
+	"testing"
+)
 
-//Recover just like try...catch to other languages
-func Recover(work func(), onErr func(interface{})) {
-	defer func() {
-		err := recover()
-		if err != nil {
-			log.RevocerErrorf("Recover from panic error: %#v", err)
-			onErr(err)
-		}
-	}()
+func TestRecover(t *testing.T) {
+	Func1()
+}
 
-	work()
+func Func1() {
+	Func2()
+}
+
+func Func2() {
+	Recover(func() {
+		panic("Hello Error")
+	}, func(err interface{}) {
+		fmt.Println(err)
+	})
 }

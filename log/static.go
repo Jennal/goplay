@@ -56,6 +56,10 @@ func NewError(args ...interface{}) error {
 	return defaultLogger.NewError(args...)
 }
 
+func RevocerErrorf(format string, args ...interface{}) {
+	defaultLogger.RecoverErrorf(format, args...)
+}
+
 func StackTrace(all bool) string {
 	// Reserve 10K buffer at first
 	buf := make([]byte, 10240)
