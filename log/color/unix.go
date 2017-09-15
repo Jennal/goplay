@@ -10,26 +10,16 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package aop
+// +build !windows
 
-import (
-	"testing"
+//Package color makes logs colorful
+package color
 
-	"github.com/jennal/goplay/log"
-)
+import "github.com/fatih/color"
 
-func TestRecover(t *testing.T) {
-	Func1()
-}
-
-func Func1() {
-	Func2()
-}
-
-func Func2() {
-	Recover(func() {
-		panic("Hello Error")
-	}, func(err interface{}) {
-		log.RevocerErrorf("error: %#v", err)
-	})
-}
+var Red = color.New(color.FgRed).SprintFunc()
+var Green = color.New(color.FgGreen).SprintFunc()
+var Cyan = color.New(color.FgCyan).SprintFunc()
+var Blue = color.New(color.FgBlue).SprintFunc()
+var Yellow = color.New(color.FgYellow).SprintFunc()
+var Magenta = color.New(color.FgMagenta).SprintFunc()

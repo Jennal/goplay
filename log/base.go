@@ -20,6 +20,8 @@ import (
 	"os"
 	"runtime"
 	"strings"
+
+	"github.com/jennal/goplay/log/color"
 )
 
 const (
@@ -116,7 +118,7 @@ func (logger _logger) NewError(args ...interface{}) error {
 
 func (logger _logger) RecoverErrorf(format string, args ...interface{}) {
 	setStderr()
-	l.Output(logger.depth, logger.prefix+fmt.Sprintf(format, args...)+"\n"+GetStack(8))
+	l.Output(logger.depth, logger.prefix+color.Red("recover from panic: ")+fmt.Sprintf(format, args...)+"\n"+GetStack(9))
 }
 
 func GetStack(skip int) string {

@@ -10,26 +10,17 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package aop
+// +build windows
 
-import (
-	"testing"
+package color
 
-	"github.com/jennal/goplay/log"
-)
-
-func TestRecover(t *testing.T) {
-	Func1()
+func echo(str string) string {
+	return str
 }
 
-func Func1() {
-	Func2()
-}
-
-func Func2() {
-	Recover(func() {
-		panic("Hello Error")
-	}, func(err interface{}) {
-		log.RevocerErrorf("error: %#v", err)
-	})
-}
+var Red = echo
+var Green = echo
+var Cyan = echo
+var Blue = echo
+var Yellow = echo
+var Magenta = echo

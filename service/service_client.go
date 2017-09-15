@@ -243,14 +243,7 @@ func (s *ServiceClient) setupEventLoop() {
 					}
 				}
 			}, func(err interface{}) {
-				if e, ok := err.(error); ok {
-					log.Error(e)
-				} else if err != nil {
-					log.Errorf("%#v", err)
-				} else {
-					log.Errorf("%#v", err)
-				}
-
+				log.RevocerErrorf("%v", err)
 				s.Disconnect()
 			})
 		}()

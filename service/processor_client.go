@@ -19,6 +19,7 @@ import (
 
 	"fmt"
 
+	"github.com/jennal/goplay/aop"
 	"github.com/jennal/goplay/encode"
 	"github.com/jennal/goplay/filter"
 	"github.com/jennal/goplay/filter/heartbeat"
@@ -171,101 +172,94 @@ func (s *ProcessorClient) setupEventLoop() {
 
 		go s.checkTimeoutLoop()
 		go func() {
-			// aop.Recover(func() {
-		Loop:
-			for {
-				select {
-				case <-exitChan:
-					break Loop
-				default:
-					header, bodyBuf, err := s.Recv()
-					if err != nil {
-						log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
-						s.Disconnect()
+			aop.Recover(func() {
+			Loop:
+				for {
+					select {
+					case <-exitChan:
 						break Loop
-					}
-
-					if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
-						log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
-					}
-
-					clientId := header.ClientID
-					if clientId == 0 {
-						clientId = s.ClientID
-					}
-
-					sess := s.sessionManager.GetSessionByID(s.ID, clientId)
-					if sess == nil {
-						sess = session.NewSession(s)
-						sess.Bind(s.ID)
-						sess.BindClientID(clientId)
-
-						s.sessionManager.Add(sess)
-					}
-
-					//filters
-					if s.filters != nil && len(s.filters) > 0 {
-						for _, filter := range s.filters {
-							if !filter.OnRecv(sess, header, bodyBuf) {
-								goto Loop
-							}
-						}
-					}
-
-					//heart beat
-					if !s.heartBeatManager.OnRecv(s.Session, header, bodyBuf) {
-						goto Loop
-					}
-
-					switch header.Type {
-					case pkg.PKG_REQUEST, pkg.PKG_RPC_REQUEST:
-						if s.router != nil {
-							results, err := s.callRouteFunc(sess, header, bodyBuf)
-							if err != nil {
-								log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
-								sess.Disconnect()
-								break Loop
-							}
-							// fmt.Printf(" => Loop result: %#v\n", results)
-							err = s.response(sess, header, results)
-							if err != nil {
-								log.Errorf("Response:\n\terr => %v\n\theader => %#v\n\tresults => %#v", err, header, results)
-								sess.Disconnect()
-								break Loop
-							}
-						}
-					case pkg.PKG_NOTIFY, pkg.PKG_RPC_NOTIFY:
-						if s.router != nil {
-							_, err := s.callRouteFunc(sess, header, bodyBuf)
-							if err != nil {
-								log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
-								sess.Disconnect()
-								break Loop
-							}
-						}
-					case pkg.PKG_PUSH, pkg.PKG_RPC_PUSH:
-						s.recvPush(header, bodyBuf)
-					case pkg.PKG_RESPONSE, pkg.PKG_RPC_RESPONSE:
-						s.recvResponse(header, bodyBuf)
-					case pkg.PKG_HEARTBEAT, pkg.PKG_HEARTBEAT_RESPONSE:
-						fallthrough
 					default:
-						log.Errorf("Can't reach here!!\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
-						break
+						header, bodyBuf, err := s.Recv()
+						if err != nil {
+							log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+							s.Disconnect()
+							break Loop
+						}
+
+						if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
+							log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
+						}
+
+						clientId := header.ClientID
+						if clientId == 0 {
+							clientId = s.ClientID
+						}
+
+						sess := s.sessionManager.GetSessionByID(s.ID, clientId)
+						if sess == nil {
+							sess = session.NewSession(s)
+							sess.Bind(s.ID)
+							sess.BindClientID(clientId)
+
+							s.sessionManager.Add(sess)
+						}
+
+						//filters
+						if s.filters != nil && len(s.filters) > 0 {
+							for _, filter := range s.filters {
+								if !filter.OnRecv(sess, header, bodyBuf) {
+									goto Loop
+								}
+							}
+						}
+
+						//heart beat
+						if !s.heartBeatManager.OnRecv(s.Session, header, bodyBuf) {
+							goto Loop
+						}
+
+						switch header.Type {
+						case pkg.PKG_REQUEST, pkg.PKG_RPC_REQUEST:
+							if s.router != nil {
+								results, err := s.callRouteFunc(sess, header, bodyBuf)
+								if err != nil {
+									log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+									sess.Disconnect()
+									break Loop
+								}
+								// fmt.Printf(" => Loop result: %#v\n", results)
+								err = s.response(sess, header, results)
+								if err != nil {
+									log.Errorf("Response:\n\terr => %v\n\theader => %#v\n\tresults => %#v", err, header, results)
+									sess.Disconnect()
+									break Loop
+								}
+							}
+						case pkg.PKG_NOTIFY, pkg.PKG_RPC_NOTIFY:
+							if s.router != nil {
+								_, err := s.callRouteFunc(sess, header, bodyBuf)
+								if err != nil {
+									log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+									sess.Disconnect()
+									break Loop
+								}
+							}
+						case pkg.PKG_PUSH, pkg.PKG_RPC_PUSH:
+							s.recvPush(header, bodyBuf)
+						case pkg.PKG_RESPONSE, pkg.PKG_RPC_RESPONSE:
+							s.recvResponse(header, bodyBuf)
+						case pkg.PKG_HEARTBEAT, pkg.PKG_HEARTBEAT_RESPONSE:
+							fallthrough
+						default:
+							log.Errorf("Can't reach here!!\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+							break
+						}
 					}
 				}
-			}
-			// }, func(err interface{}) {
-			// 	if e, ok := err.(error); ok {
-			// 		log.Error(e)
-			// 	} else if err != nil {
-			// 		log.Errorf("%#v", err)
-			// 	} else {
-			// 		log.Errorf("%#v", err)
-			// 	}
-
-			// 	s.Disconnect()
-			// })
+			}, func(err interface{}) {
+				log.RevocerErrorf("%v", err)
+				s.Disconnect()
+			})
 		}()
 	})
 	s.Once(transfer.EVENT_CLIENT_DISCONNECTED, s, func(cli transfer.IClient) {

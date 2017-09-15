@@ -12,14 +12,11 @@
 
 package aop
 
-import "github.com/jennal/goplay/log"
-
 //Recover just like try...catch to other languages
 func Recover(work func(), onErr func(interface{})) {
 	defer func() {
 		err := recover()
 		if err != nil {
-			log.RevocerErrorf("Recover from panic error: %#v", err)
 			onErr(err)
 		}
 	}()
