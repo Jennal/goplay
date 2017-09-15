@@ -30,6 +30,6 @@ func Func2() {
 	Recover(func() {
 		panic("Hello Error")
 	}, func(err interface{}) {
-		log.RevocerErrorf("error: %#v", err)
+		log.RecoverErrorf("error: %#v", err)
 	})
 }

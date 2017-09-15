@@ -56,7 +56,7 @@ func NewError(args ...interface{}) error {
 	return defaultLogger.NewError(args...)
 }
 
-func RevocerErrorf(format string, args ...interface{}) {
+func RecoverErrorf(format string, args ...interface{}) {
 	defaultLogger.RecoverErrorf(format, args...)
 }
 

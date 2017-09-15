@@ -65,7 +65,7 @@ func (self *Handler) OnNewClient(cli transfer.IClient) {
 				}
 			}
 		}, func(err interface{}) {
-			log.RevocerErrorf("error: %#v", err)
+			log.RecoverErrorf("error: %#v", err)
 		})
 	}()
 }

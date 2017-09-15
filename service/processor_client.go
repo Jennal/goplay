@@ -257,7 +257,7 @@ func (s *ProcessorClient) setupEventLoop() {
 					}
 				}
 			}, func(err interface{}) {
-				log.RevocerErrorf("%v", err)
+				log.RecoverErrorf("%v", err)
 				s.Disconnect()
 			})
 		}()
