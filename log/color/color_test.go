@@ -10,28 +10,27 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-// +build windows
-
 package color
 
-func echo(str string) string {
-	return str
+import (
+	"testing"
+)
+
+func TestColor(t *testing.T) {
+	t.Log(Red("Red"))
+	t.Log(Green("Green"))
+	t.Log(Cyan("Cyan"))
+	t.Log(Blue("Blue"))
+	t.Log(Yellow("Yellow"))
+	t.Log(Magenta("Magenta"))
+	t.Log(Black("Black"))
+	t.Log(White("White"))
+	t.Log(HiRed("HiRed"))
+	t.Log(HiGreen("HiGreen"))
+	t.Log(HiCyan("HiCyan"))
+	t.Log(HiBlue("HiBlue"))
+	t.Log(HiYellow("HiYellow"))
+	t.Log(HiMagenta("HiMagenta"))
+	t.Log(HiBlack("HiBlack"))
+	t.Log(HiWhite("HiWhite"))
 }
-
-var Red = echo
-var Green = echo
-var Cyan = echo
-var Blue = echo
-var Yellow = echo
-var Magenta = echo
-var Black = echo
-var White = echo
-
-var HiRed = echo
-var HiGreen = echo
-var HiCyan = echo
-var HiBlue = echo
-var HiYellow = echo
-var HiMagenta = echo
-var HiBlack = echo
-var HiWhite = echo
