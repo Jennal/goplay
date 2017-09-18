@@ -12,27 +12,6 @@
 
 package pkg
 
-type HostPort struct {
-	Host string
-	Port int
-}
-
-type HandShakeClientData struct {
-	ClientType    string
-	ClientVersion string
-	DictMd5       string
-}
-
-type HandShakeResponse struct {
-	ServerVersion string
-	Now           string
-	HeartBeatRate int
-	Routes        map[string]RouteIndex
-
-	IsReconnect bool
-	ReconnectTo HostPort
-}
-
 func NewHandShakeHeader(e EncodingType) *Header {
 	return &Header{
 		Type:         PKG_HAND_SHAKE,

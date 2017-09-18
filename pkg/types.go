@@ -55,3 +55,5 @@ type RouteIndex uint16
 const (
 	ROUTE_INDEX_NONE RouteIndex = 0
 )
+
+type RouteMap map[string]RouteIndex

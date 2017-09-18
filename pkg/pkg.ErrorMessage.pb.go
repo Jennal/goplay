@@ -6,9 +6,13 @@ Package pkg is a generated protocol buffer package.
 
 It is generated from these files:
 	pkg.ErrorMessage.proto
+	pkg.HandShake.proto
 
 It has these top-level messages:
 	ErrorMessage
+	HostPort
+	HandShakeClientData
+	HandShakeResponse
 */
 package pkg
 

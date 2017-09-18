@@ -40,7 +40,7 @@ func NewHandShakeFilter(r *router.Router) *HandShakeFilter {
 }
 
 func SendHandShake(client transfer.IClient, e pkg.EncodingType, encoder encode.EncodeDecoder, md5 string) error {
-	buffer, err := encoder.Marshal(pkg.HandShakeClientData{
+	buffer, err := encoder.Marshal(&pkg.HandShakeClientData{
 		ClientType:    consts.ClientType,
 		ClientVersion: consts.Version,
 		DictMd5:       md5,
@@ -75,14 +75,14 @@ func (self *HandShakeFilter) OnRecv(sess *session.Session, header *pkg.Header, d
 	}
 
 	routeMap := pkg.HandShakeInstance.RoutesMap()
-	respData := pkg.HandShakeResponse{
+	respData := &pkg.HandShakeResponse{
 		ServerVersion: consts.Version,
 		Now:           time.Now().Format("2006-01-02 15:04:05"),
 		HeartBeatRate: consts.HeartBeatRate,
 		Routes:        nil,
 
 		IsReconnect: false,
-		ReconnectTo: pkg.HostPort{
+		ReconnectTo: &pkg.HostPort{
 			Host: "",
 			Port: 0,
 		},
@@ -90,18 +90,22 @@ func (self *HandShakeFilter) OnRecv(sess *session.Session, header *pkg.Header, d
 
 	if self.reconnectTo != nil {
 		respData.IsReconnect = true
-		respData.ReconnectTo = *self.reconnectTo
+		respData.ReconnectTo = self.reconnectTo
 	}
 
 	//check md5
-	encodeRouteMap, err := encoder.Marshal(routeMap)
+	md5Encoder := encode.GetMd5EncodeDecoder()
+	encodeRouteMap, err := md5Encoder.Marshal(routeMap)
 	if err != nil {
 		log.Error(err)
 		return true
 	}
 
 	if decodeData.DictMd5 != helpers.Md5(encodeRouteMap) {
-		respData.Routes = routeMap
+		respData.Routes = make(map[string]uint32)
+		for k, v := range routeMap {
+			respData.Routes[k] = uint32(v)
+		}
 	}
 
 	encodeRespData, err := encoder.Marshal(respData)

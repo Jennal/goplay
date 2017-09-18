@@ -1,10 +1,12 @@
 package pkg
 
-import "github.com/jennal/goplay/log"
+import (
+	"github.com/jennal/goplay/log"
+)
 
 type HandShake struct {
 	serverResponse *HandShakeResponse
-	routesMap      map[string]RouteIndex
+	routesMap      RouteMap
 }
 
 var HandShakeInstance *HandShake
@@ -16,20 +18,24 @@ func init() {
 	}
 }
 
-func (r *HandShake) UpdateRoutesMap(data map[string]RouteIndex) {
+func (r *HandShake) UpdateRoutesMap(data RouteMap) {
 	r.routesMap = data
 }
 
 func (r *HandShake) UpdateHandShakeResponse(resp *HandShakeResponse) {
 	r.serverResponse = resp
-	r.routesMap = resp.Routes
+	r.routesMap = make(RouteMap)
+
+	for k, v := range resp.Routes {
+		r.routesMap[k] = RouteIndex(v)
+	}
 }
 
 func (r *HandShake) IsInited() bool {
 	return r.routesMap != nil
 }
 
-func (r *HandShake) RoutesMap() map[string]RouteIndex {
+func (r *HandShake) RoutesMap() RouteMap {
 	return r.routesMap
 }
 

@@ -1,0 +1,24 @@
+syntax = "proto3";
+package pkg;
+option csharp_namespace = "GoPlay.Package";
+
+message HostPort {
+	string Host = 1;
+	int32 Port = 2;
+}
+
+message HandShakeClientData {
+	string ClientType    = 1;
+	string ClientVersion = 2;
+	string DictMd5       = 3;
+}
+
+message HandShakeResponse {
+	string ServerVersion = 1;
+	string Now           = 2;
+	int32 HeartBeatRate  = 3;
+	map<string, uint32> Routes = 4;
+
+	bool IsReconnect = 5;
+	HostPort ReconnectTo = 6;
+}

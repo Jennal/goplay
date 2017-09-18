@@ -23,3 +23,7 @@ func GetEncodeDecoder(encoding pkg.EncodingType) EncodeDecoder {
 
 	return nil
 }
+
+func GetMd5EncodeDecoder() EncodeDecoder {
+	return encoderMap[pkg.ENCODING_JSON]
+}
