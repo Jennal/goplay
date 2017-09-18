@@ -38,7 +38,7 @@ func NewHandShakeHeader(e EncodingType) *Header {
 		Type:         PKG_HAND_SHAKE,
 		Encoding:     e,
 		ID:           0,
-		Status:       STAT_OK,
+		Status:       Status_OK,
 		ContentSize:  0,
 		Route:        "",
 		RouteEncoded: ROUTE_INDEX_NONE,

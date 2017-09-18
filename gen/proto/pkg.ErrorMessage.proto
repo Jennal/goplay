@@ -1,0 +1,17 @@
+syntax = "proto3";
+package pkg;
+option csharp_namespace = "GoPlay.Package";
+
+enum Status {
+	OK                = 0x00;
+	ERR               = 0x90;
+	ERR_WRONG_PARAMS  = 0x91;
+	ERR_DECODE_FAILED = 0x92;
+	ERR_TIMEOUT       = 0x93;
+	ERR_EMPTY_RESULT  = 0x94;
+}
+
+message ErrorMessage {
+    Status Code = 1;
+    string Message = 2;
+}

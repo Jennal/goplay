@@ -13,18 +13,6 @@
 //Package pkg defines data structures pass through network
 package pkg
 
-//go:generate stringer -type=Status
-type Status byte
-
-const (
-	STAT_OK                Status = 0x00
-	STAT_ERR               Status = 0x90
-	STAT_ERR_WRONG_PARAMS  Status = 0x91
-	STAT_ERR_DECODE_FAILED Status = 0x92
-	STAT_ERR_TIMEOUT       Status = 0x93
-	STAT_ERR_EMPTY_RESULT  Status = 0x94
-)
-
 //go:generate stringer -type=PackageType
 type PackageType byte
 

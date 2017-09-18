@@ -100,7 +100,7 @@ func (self *Handler) RequestObj(sess *session.Session, n CustomMessage) (CustomM
 
 func (self *Handler) RequestFail(sess *session.Session, n int) (int, *pkg.ErrorMessage) {
 	self.t.Log("Handler-RequestFail", sess, n)
-	return 0, pkg.NewErrorMessage(pkg.STAT_ERR_WRONG_PARAMS, "Test Error")
+	return 0, pkg.NewErrorMessage(pkg.Status_ERR_WRONG_PARAMS, "Test Error")
 }
 
 func TestService(t *testing.T) {
@@ -208,7 +208,7 @@ func TestService(t *testing.T) {
 		assert.True(t, false, "can't not come to here")
 	}, func(err *pkg.ErrorMessage) {
 		t.Log("Recv Error:", err)
-		assert.Equal(t, pkg.NewErrorMessage(pkg.STAT_ERR_WRONG_PARAMS, "Test Error"), err)
+		assert.Equal(t, pkg.NewErrorMessage(pkg.Status_ERR_WRONG_PARAMS, "Test Error"), err)
 		callIn["test.handler.requestfail"] = true
 	})
 	assert.Nil(t, err, "client.Request() error: %v", err)

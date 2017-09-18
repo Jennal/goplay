@@ -41,7 +41,7 @@ func NewHeader(t PackageType, e EncodingType, idGen *IDGen, r string) *Header {
 		Type:         t,
 		Encoding:     e,
 		ID:           idGen.NextID(),
-		Status:       STAT_OK,
+		Status:       Status_OK,
 		ContentSize:  0,
 		Route:        r,
 		RouteEncoded: ROUTE_INDEX_NONE,

@@ -10,19 +10,6 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package pkg
+package proto
 
-import (
-	"fmt"
-)
-
-func NewErrorMessage(code Status, msg string) *ErrorMessage {
-	return &ErrorMessage{
-		Code:    code,
-		Message: msg,
-	}
-}
-
-func (self ErrorMessage) Error() string {
-	return fmt.Sprintf("[%d]: %s", self.Code, self.Message)
-}
+//go:generate protoc --go_out=../../pkg *.proto

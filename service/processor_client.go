@@ -113,7 +113,7 @@ func (s *ProcessorClient) checkTimeoutLoop() {
 		for id, item := range s.requestCbs {
 			if time.Since(item.startTime) > REQUEST_TIMEOUT {
 				ids = append(ids, id)
-				item.failCallback.Call(pkg.NewErrorMessage(pkg.STAT_ERR_TIMEOUT, "Request Timeout"))
+				item.failCallback.Call(pkg.NewErrorMessage(pkg.Status_ERR_TIMEOUT, "Request Timeout"))
 			}
 		}
 
@@ -296,11 +296,11 @@ func (s *ProcessorClient) response(sess *session.Session, header *pkg.Header, re
 	/* check error != nil */
 	if len(results) == 2 && !reflect.ValueOf(results[1]).IsNil() {
 		result = results[1]
-		// respHeader.Status = pkg.STAT_ERR
+		// respHeader.Status = pkg.Status_ERR
 		respHeader.Status = result.(*pkg.ErrorMessage).Code
-		if respHeader.Status == pkg.STAT_OK {
-			log.Errorf("ErrorMessage.Code can't be STAT_OK!")
-			respHeader.Status = pkg.STAT_ERR
+		if respHeader.Status == pkg.Status_OK {
+			log.Errorf("ErrorMessage.Code can't be Status_OK!")
+			respHeader.Status = pkg.Status_ERR
 		}
 	}
 
@@ -352,7 +352,7 @@ func (s *ProcessorClient) recvResponse(header *pkg.Header, body []byte) {
 	}
 
 	// log.Logf("%v %v %v", header.Status, body, string(body))
-	if header.Status == pkg.STAT_OK {
+	if header.Status == pkg.Status_OK {
 		val := cbs.successCallbak.NewArg(0)
 		err := s.Encoder.Unmarshal(body, val)
 		if err == nil {
@@ -369,7 +369,7 @@ func (s *ProcessorClient) recvResponse(header *pkg.Header, body []byte) {
 	}
 
 	cbs.failCallback.Call(pkg.NewErrorMessage(
-		pkg.STAT_ERR_DECODE_FAILED,
+		pkg.Status_ERR_DECODE_FAILED,
 		fmt.Sprintf("decode body failed: %#v | %v", body, string(body))))
 }
 

@@ -116,7 +116,7 @@ func (s *ServiceClient) checkTimeoutLoop() {
 		for id, item := range s.requestCbs {
 			if time.Since(item.startTime) > REQUEST_TIMEOUT {
 				ids = append(ids, id)
-				item.failCallback.Call(pkg.NewErrorMessage(pkg.STAT_ERR_TIMEOUT, "Request Timeout"))
+				item.failCallback.Call(pkg.NewErrorMessage(pkg.Status_ERR_TIMEOUT, "Request Timeout"))
 			}
 		}
 
@@ -283,7 +283,7 @@ func (s *ServiceClient) recvResponse(header *pkg.Header, body []byte) {
 	}
 
 	// log.Logf("%v %v %v", header.Status, body, string(body))
-	if header.Status == pkg.STAT_OK {
+	if header.Status == pkg.Status_OK {
 		val := cbs.successCallbak.NewArg(0)
 		err := s.Encoder.Unmarshal(body, val)
 		if err == nil {
@@ -300,7 +300,7 @@ func (s *ServiceClient) recvResponse(header *pkg.Header, body []byte) {
 	}
 
 	cbs.failCallback.Call(pkg.NewErrorMessage(
-		pkg.STAT_ERR_DECODE_FAILED,
+		pkg.Status_ERR_DECODE_FAILED,
 		fmt.Sprintf("decode body failed: %#v | %v", body, string(body))))
 }
 
