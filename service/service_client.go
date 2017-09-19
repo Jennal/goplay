@@ -262,9 +262,10 @@ func (s *ServiceClient) recvPush(header *pkg.Header, body []byte) {
 		return
 	}
 
+	encoder := encode.GetEncodeDecoder(header.Encoding)
 	for _, item := range list {
 		val := item.NewArg(0)
-		s.Encoder.Unmarshal(body, val)
+		encoder.Unmarshal(body, val)
 		// log.Log("==========>\t", i, "\t", val)
 		item.Call(val)
 	}
@@ -283,16 +284,17 @@ func (s *ServiceClient) recvResponse(header *pkg.Header, body []byte) {
 	}
 
 	// log.Logf("%v %v %v", header.Status, body, string(body))
+	encoder := encode.GetEncodeDecoder(header.Encoding)
 	if header.Status == pkg.Status_OK {
 		val := cbs.successCallbak.NewArg(0)
-		err := s.Encoder.Unmarshal(body, val)
+		err := encoder.Unmarshal(body, val)
 		if err == nil {
 			cbs.successCallbak.Call(val)
 			return
 		}
 	} else {
 		val := cbs.failCallback.NewArg(0)
-		err := s.Encoder.Unmarshal(body, val)
+		err := encoder.Unmarshal(body, val)
 		if err == nil {
 			cbs.failCallback.Call(val)
 			return

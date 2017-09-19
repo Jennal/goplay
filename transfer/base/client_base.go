@@ -197,7 +197,10 @@ func (client *Client) Send(header *pkg.Header, data []byte) error {
 	if data != nil {
 		buffer = append(buffer, data...)
 	}
-	// log.Logf("Write:\n\theader => %#v\n\tbody => %#v | %v\n\tbuffer => %#v (%v)\n", header, data, string(data), buffer, len(buffer))
+
+	// if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
+	// 	log.Logf("Write:\n\theader => %#v\n\tbody => %#v | %v\n\tbuffer => %#v (%v)\n", header, data, string(data), buffer, len(buffer))
+	// }
 
 	_, err = client.Write(buffer)
 
