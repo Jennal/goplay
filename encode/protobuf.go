@@ -24,7 +24,7 @@ type Protobuf struct {
 func (self Protobuf) Marshal(obj interface{}) ([]byte, error) {
 	pb, ok := obj.(proto.Message)
 	if !ok {
-		return nil, log.NewError("protobuf: convert on wrong type value")
+		return nil, log.NewErrorf("protobuf: convert on wrong type value: %#v", obj)
 	}
 	return proto.Marshal(pb)
 }
@@ -32,7 +32,7 @@ func (self Protobuf) Marshal(obj interface{}) ([]byte, error) {
 func (self Protobuf) Unmarshal(data []byte, content interface{}) error {
 	pb, ok := content.(proto.Message)
 	if !ok {
-		return log.NewError("protobuf: convert on wrong type value")
+		return log.NewErrorf("protobuf: convert on wrong type value: %#v", content)
 	}
 	return proto.Unmarshal(data, pb)
 }
