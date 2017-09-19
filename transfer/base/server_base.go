@@ -124,7 +124,6 @@ func (serv *Server) Start() error {
 			case <-serv.exitChan:
 				return
 			default:
-
 				client, err := serv.impl.Accept()
 				if err != nil {
 					if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {

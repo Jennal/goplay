@@ -24,6 +24,7 @@ import (
 	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/transfer"
 	"github.com/jennal/goplay/transfer/base"
+	"github.com/jennal/goplay/transfer/common"
 )
 
 const (
@@ -48,7 +49,7 @@ type server struct {
 func NewServer(host string, port int) transfer.IServer {
 	serv := &server{
 		Server:     base.NewServer(host, port),
-		clientChan: make(chan transfer.IClient, 10),
+		clientChan: make(chan transfer.IClient),
 	}
 	serv.SetImplement(serv)
 	return serv
@@ -84,19 +85,18 @@ func (serv *server) Open() error {
 }
 
 func (serv *server) Accept() (transfer.IClient, error) {
-	log.Log("Accept")
-	for {
-		select {
-		case cli := <-serv.clientChan:
-			return cli, nil
-		default:
-			time.Sleep(100 * time.Millisecond)
-		}
+	select {
+	case cli := <-serv.clientChan:
+		log.Log("Accept")
+		return cli, nil
+	default:
+		time.Sleep(100 * time.Millisecond)
+		return nil, common.NewErrorTimeout("accept client timeout")
 	}
 }
 
 func (serv *server) Close() error {
-	//TODO:
+	/* DO NOTHING */
 	return nil
 }
 
