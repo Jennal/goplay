@@ -92,12 +92,14 @@ func (self *HeartBeatProcessor) checkTimeOut() {
 		ids := []pkg.PackageIDType{}
 		now := time.Now()
 
+		self.mapMutex.Lock()
 		for id, val := range self.times {
 			if now.Sub(val) > TIMEOUT {
 				// fmt.Printf("\t => Timeout: %v => %v, id = %v\n", now, val, id)
 				ids = append(ids, id)
 			}
 		}
+		self.mapMutex.Unlock()
 
 		for _, id := range ids {
 			self.popTime(id)
