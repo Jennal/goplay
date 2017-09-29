@@ -149,6 +149,7 @@ func GetStack(skip int) string {
 		if strings.HasPrefix(frame.Function, "runtime.") &&
 			!strings.HasPrefix(frame.Function, "runtime.call") &&
 			!strings.HasPrefix(frame.Function, "runtime.gopanic") &&
+			!strings.HasPrefix(frame.Function, "runtime.panicslice") &&
 			strings.Contains(frame.File, "runtime/") {
 			break
 		}
