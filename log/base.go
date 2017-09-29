@@ -146,13 +146,13 @@ func GetStack(skip int) string {
 	// A fixed number of pcs can expand to an indefinite number of Frames.
 	for {
 		frame, more := frames.Next()
-		if strings.HasPrefix(frame.Function, "runtime.") &&
-			!strings.HasPrefix(frame.Function, "runtime.call") &&
-			!strings.HasPrefix(frame.Function, "runtime.gopanic") &&
-			!strings.HasPrefix(frame.Function, "runtime.panicslice") &&
-			strings.Contains(frame.File, "runtime/") {
-			break
-		}
+		// if strings.HasPrefix(frame.Function, "runtime.") &&
+		// 	!strings.HasPrefix(frame.Function, "runtime.call") &&
+		// 	!strings.HasPrefix(frame.Function, "runtime.gopanic") &&
+		// 	!strings.HasPrefix(frame.Function, "runtime.panic") &&
+		// 	strings.Contains(frame.File, "runtime/") {
+		// 	break
+		// }
 
 		filename := color.HiMagenta(strings.TrimPrefix(frame.File, gopath))
 		line := color.HiGreen(fmt.Sprint(frame.Line))

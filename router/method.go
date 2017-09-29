@@ -65,14 +65,14 @@ func (m *Method) Call(sess *session.Session, header *pkg.Header, data []byte) (r
 		aop.Recover(func() {
 			result = m.CallArgs(sess, arg2)
 		}, func(e interface{}) {
-			err = fmt.Errorf("router.Method.Call[NumIn=2] err: %#v", e)
+			err = fmt.Errorf("router.Method.Call[NumIn=3] err: %#v", e)
 			log.RecoverErrorf("%v", err)
 		})
 	} else if m.NumIn() == 4 {
 		aop.Recover(func() {
 			result = m.CallArgs(sess, header, data)
 		}, func(e interface{}) {
-			err = fmt.Errorf("router.Method.Call[NumIn=2] err: %#v", e)
+			err = fmt.Errorf("router.Method.Call[NumIn=4] err: %#v", e)
 			log.RecoverErrorf("%v", err)
 		})
 	}
