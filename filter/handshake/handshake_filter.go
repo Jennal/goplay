@@ -17,39 +17,34 @@ import (
 	"time"
 
 	"github.com/jennal/goplay/helpers"
-	"github.com/jennal/goplay/transfer"
 
 	"github.com/jennal/goplay/encode"
 
 	"github.com/jennal/goplay/consts"
 	"github.com/jennal/goplay/log"
 	"github.com/jennal/goplay/pkg"
-	"github.com/jennal/goplay/router"
 	"github.com/jennal/goplay/session"
 )
 
 type HandShakeFilter struct {
-	router      *router.Router
 	reconnectTo *pkg.HostPort
 }
 
-func NewHandShakeFilter(r *router.Router) *HandShakeFilter {
-	return &HandShakeFilter{
-		router: r,
-	}
+func NewHandShakeFilter() *HandShakeFilter {
+	return &HandShakeFilter{}
 }
 
-func SendHandShake(client transfer.IClient, e pkg.EncodingType, encoder encode.EncodeDecoder, md5 string) error {
+func GetHandShakeRequest(e pkg.EncodingType, encoder encode.EncodeDecoder, md5 string) (*pkg.Header, []byte, error) {
 	buffer, err := encoder.Marshal(&pkg.HandShakeClientData{
 		ClientType:    consts.ClientType,
 		ClientVersion: consts.Version,
 		DictMd5:       md5,
 	})
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
-	client.Send(pkg.NewHandShakeHeader(e), buffer)
-	return nil
+
+	return pkg.NewHandShakeHeader(e), buffer, nil
 }
 
 func (self *HandShakeFilter) SetReconnectTo(data *pkg.HostPort) {
@@ -61,7 +56,7 @@ func (self *HandShakeFilter) OnNewClient(sess *session.Session) bool { /* return
 }
 
 func (self *HandShakeFilter) OnRecv(sess *session.Session, header *pkg.Header, data []byte) bool { /* return false to ignore */
-	if header.Type != pkg.PKG_HAND_SHAKE {
+	if header.Type&^pkg.PKG_RPC != pkg.PKG_HAND_SHAKE {
 		return true
 	}
 
@@ -74,7 +69,9 @@ func (self *HandShakeFilter) OnRecv(sess *session.Session, header *pkg.Header, d
 		return true
 	}
 
-	routeMap := pkg.HandShakeInstance.RoutesMap()
+	var routeMap pkg.RouteMap
+	routeMap = pkg.DefaultHandShake().RoutesMap()
+
 	respData := &pkg.HandShakeResponse{
 		ServerVersion: consts.Version,
 		Now:           time.Now().Format("2006-01-02 15:04:05"),
@@ -114,7 +111,8 @@ func (self *HandShakeFilter) OnRecv(sess *session.Session, header *pkg.Header, d
 		return true
 	}
 
-	header.Type = pkg.PKG_HAND_SHAKE_RESPONSE
+	header.Type = header.Type.ToResponse()
+	// log.Logf("HandShake Response:\n\tins(%p) => %#v\n\theader => %#v\n\t%#v | %v", pkg.DefaultHandShake(), pkg.DefaultHandShake(), header, encodeRespData, string(encodeRespData))
 	err = sess.Send(header, encodeRespData)
 	if err != nil {
 		log.Error(err)

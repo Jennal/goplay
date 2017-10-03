@@ -141,7 +141,7 @@ func (s *ProcessorClient) getSession(id uint32, clientId uint32) *session.Sessio
 }
 
 func (s *ProcessorClient) getStringRouter(idx pkg.RouteIndex) string {
-	str, ok := pkg.HandShakeInstance.GetStringRoute(idx)
+	str, ok := pkg.DefaultHandShake().GetStringRoute(idx)
 	if !ok {
 		return ""
 	}

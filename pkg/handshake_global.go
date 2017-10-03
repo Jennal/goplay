@@ -1,69 +1,99 @@
 package pkg
 
-import (
-	"github.com/jennal/goplay/log"
-)
+import "github.com/jennal/goplay/log"
 
-type HandShake struct {
+type HandShakeImpl struct {
 	serverResponse *HandShakeResponse
 	routesMap      RouteMap
+	rpcRoutesMap   RouteMap
 }
 
-var HandShakeInstance *HandShake
+type HandShake interface {
+	MergeRpcRoutesMap(data RouteMap)
+	UpdateRoutesMap(data RouteMap)
+	UpdateHandShakeResponse(resp *HandShakeResponse)
+	RoutesMap() RouteMap
+	RpcRoutesMap() RouteMap
+	GetIndexRoute(str string) (RouteIndex, bool)
+	GetStringRoute(idx RouteIndex) (string, bool)
+	ConvertRouteIndexToRpc(route string) (RouteIndex, bool)
+	ConvertRouteIndexFromRpc(route string) (RouteIndex, bool)
+}
+
+var _handShakeInstance HandShake
 
 func init() {
-	HandShakeInstance = &HandShake{
+	_handShakeInstance = NewHandShakeImpl()
+}
+
+func SetHandShakeImpl(hs HandShake) error {
+	if hs == nil {
+		return log.NewError("handshake can't be nil")
+	}
+
+	_handShakeInstance = hs
+	return nil
+}
+
+func DefaultHandShake() HandShake {
+	return _handShakeInstance
+}
+
+func NewHandShakeImpl() *HandShakeImpl {
+	return &HandShakeImpl{
 		serverResponse: nil,
-		routesMap:      nil,
+		routesMap:      make(RouteMap),
+		rpcRoutesMap:   make(RouteMap),
 	}
 }
 
-func (r *HandShake) UpdateRoutesMap(data RouteMap) {
+func (r *HandShakeImpl) MergeRpcRoutesMap(data RouteMap) {
+	r.rpcRoutesMap.Merge(data)
+}
+
+func (r *HandShakeImpl) UpdateRoutesMap(data RouteMap) {
 	r.routesMap = data
 }
 
-func (r *HandShake) UpdateHandShakeResponse(resp *HandShakeResponse) {
+func (r *HandShakeImpl) UpdateHandShakeResponse(resp *HandShakeResponse) {
 	r.serverResponse = resp
-	r.routesMap = make(RouteMap)
 
+	routesMap := make(RouteMap)
 	for k, v := range resp.Routes {
-		r.routesMap[k] = RouteIndex(v)
+		routesMap[k] = RouteIndex(v)
 	}
+
+	r.rpcRoutesMap.Merge(routesMap)
 }
 
-func (r *HandShake) IsInited() bool {
-	return r.routesMap != nil
-}
-
-func (r *HandShake) RoutesMap() RouteMap {
+func (r *HandShakeImpl) RoutesMap() RouteMap {
 	return r.routesMap
 }
 
-func (r *HandShake) GetIndexRoute(str string) (RouteIndex, bool) {
-	if !r.IsInited() {
-		log.Errorf("pkg.HandShakeInstance.routesMap not inited")
-		return ROUTE_INDEX_NONE, false
-	}
-
-	val, ok := r.routesMap[str]
-	if !ok {
-		return ROUTE_INDEX_NONE, false
-	}
-
-	return val, ok
+func (r *HandShakeImpl) RpcRoutesMap() RouteMap {
+	return r.rpcRoutesMap
 }
 
-func (r *HandShake) GetStringRoute(idx RouteIndex) (string, bool) {
-	if !r.IsInited() {
-		log.Errorf("pkg.HandShakeInstance.routesMap not inited")
-		return "", false
+func (r *HandShakeImpl) GetIndexRoute(str string) (RouteIndex, bool) {
+	if val, ok := r.routesMap.GetIndexRoute(str); ok {
+		return val, ok
 	}
 
-	for path, i := range r.routesMap {
-		if i == idx {
-			return path, true
-		}
+	return r.rpcRoutesMap.GetIndexRoute(str)
+}
+
+func (r *HandShakeImpl) GetStringRoute(idx RouteIndex) (string, bool) {
+	if val, ok := r.routesMap.GetStringRoute(idx); ok {
+		return val, ok
 	}
 
-	return "", false
+	return r.rpcRoutesMap.GetStringRoute(idx)
+}
+
+func (r *HandShakeImpl) ConvertRouteIndexToRpc(route string) (RouteIndex, bool) {
+	return r.rpcRoutesMap.GetIndexRoute(route)
+}
+
+func (r *HandShakeImpl) ConvertRouteIndexFromRpc(route string) (RouteIndex, bool) {
+	return r.routesMap.GetIndexRoute(route)
 }

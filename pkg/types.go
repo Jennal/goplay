@@ -28,11 +28,13 @@ const (
 
 	PKG_RPC = 0x10
 
-	PKG_RPC_NOTIFY    PackageType = PKG_RPC | PKG_NOTIFY
-	PKG_RPC_REQUEST   PackageType = PKG_RPC | PKG_REQUEST
-	PKG_RPC_RESPONSE  PackageType = PKG_RPC | PKG_RESPONSE
-	PKG_RPC_PUSH      PackageType = PKG_RPC | PKG_PUSH
-	PKG_RPC_BROADCAST PackageType = PKG_RPC | 0x08
+	PKG_RPC_NOTIFY              PackageType = PKG_RPC | PKG_NOTIFY
+	PKG_RPC_REQUEST             PackageType = PKG_RPC | PKG_REQUEST
+	PKG_RPC_RESPONSE            PackageType = PKG_RPC | PKG_RESPONSE
+	PKG_RPC_PUSH                PackageType = PKG_RPC | PKG_PUSH
+	PKG_RPC_HAND_SHAKE          PackageType = PKG_RPC | PKG_HAND_SHAKE
+	PKG_RPC_HAND_SHAKE_RESPONSE PackageType = PKG_RPC | PKG_HAND_SHAKE_RESPONSE
+	PKG_RPC_BROADCAST           PackageType = PKG_RPC | 0x08
 )
 
 //go:generate stringer -type=EncodingType

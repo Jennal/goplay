@@ -30,6 +30,9 @@ func (t PackageType) ToResponse() PackageType {
 		return PKG_HEARTBEAT_RESPONSE
 	case PKG_REQUEST:
 		return PKG_RESPONSE
+	/* RPC */
+	case PKG_RPC_HAND_SHAKE:
+		return PKG_RPC_HAND_SHAKE_RESPONSE
 	case PKG_RPC_REQUEST:
 		return PKG_RPC_RESPONSE
 		// case PKG_NOTIFY:
@@ -39,4 +42,8 @@ func (t PackageType) ToResponse() PackageType {
 	}
 
 	return t
+}
+
+func (t PackageType) IsRPC() bool {
+	return t&PKG_RPC == PKG_RPC
 }

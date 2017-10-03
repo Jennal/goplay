@@ -82,7 +82,7 @@ func (r *Router) Add(prefix string, obj interface{}) {
 		r.data[path] = NewMethod(obj, method)
 	}
 
-	pkg.HandShakeInstance.UpdateRoutesMap(r.calcRoutesMap())
+	pkg.DefaultHandShake().UpdateRoutesMap(r.calcRoutesMap())
 	// fmt.Printf("Router: %#v\n", r.data)
 }
 

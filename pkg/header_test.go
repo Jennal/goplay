@@ -31,7 +31,7 @@ func assertEqual(t *testing.T, n int, buffer []byte, err error, newPack, pack He
 }
 
 func TestHeaderDecode(t *testing.T) {
-	HandShakeInstance.UpdateRoutesMap(RouteMap{
+	DefaultHandShake().UpdateRoutesMap(RouteMap{
 		"test.header": 1,
 	})
 
@@ -80,7 +80,7 @@ func TestHeaderDecode(t *testing.T) {
 }
 
 func TestHeaderReader(t *testing.T) {
-	HandShakeInstance.UpdateRoutesMap(RouteMap{
+	DefaultHandShake().UpdateRoutesMap(RouteMap{
 		"test.header": 1,
 	})
 

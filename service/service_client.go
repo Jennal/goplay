@@ -143,11 +143,18 @@ func (s *ServiceClient) getSession(id uint32, clientId uint32) *session.Session 
 }
 
 func (s *ServiceClient) sendHandShake() {
-	handshake.SendHandShake(s, s.Encoding, s.Encoder, "")
+	header, body, err := handshake.GetHandShakeRequest(s.Encoding, s.Encoder, "")
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	header = pkg.NewRpcHeader(header, s.ClientID)
+	s.Send(header, body)
 }
 
 func (s *ServiceClient) getStringRouter(idx pkg.RouteIndex) string {
-	str, ok := pkg.HandShakeInstance.GetStringRoute(idx)
+	str, ok := pkg.DefaultHandShake().GetStringRoute(idx)
 	if !ok {
 		return ""
 	}
@@ -232,7 +239,7 @@ func (s *ServiceClient) setupEventLoop() {
 							s.recvPush(header, bodyBuf)
 						case pkg.PKG_RESPONSE, pkg.PKG_RPC_RESPONSE:
 							s.recvResponse(header, bodyBuf)
-						case pkg.PKG_HAND_SHAKE_RESPONSE:
+						case pkg.PKG_HAND_SHAKE_RESPONSE, pkg.PKG_RPC_HAND_SHAKE_RESPONSE:
 							s.recvHandShakeResponse(header, bodyBuf)
 						case pkg.PKG_HEARTBEAT, pkg.PKG_HEARTBEAT_RESPONSE:
 							fallthrough
@@ -311,7 +318,7 @@ func (s *ServiceClient) recvHandShakeResponse(header *pkg.Header, body []byte) {
 	encoder := encode.GetEncodeDecoder(header.Encoding)
 	resp := &pkg.HandShakeResponse{}
 	encoder.Unmarshal(body, resp)
-	pkg.HandShakeInstance.UpdateHandShakeResponse(resp)
+	pkg.DefaultHandShake().UpdateHandShakeResponse(resp)
 
 	s.handShakeChan <- true
 }

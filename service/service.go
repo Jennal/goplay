@@ -55,7 +55,7 @@ func NewService(name string, serv transfer.IServer) *Service {
 	}
 
 	serv.RegistDelegate(instance)
-	instance.RegistFilter(handshake.NewHandShakeFilter(instance.router))
+	instance.RegistFilter(handshake.NewHandShakeFilter())
 
 	return instance
 }

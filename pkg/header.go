@@ -52,6 +52,12 @@ func NewHeader(t PackageType, e EncodingType, idGen *IDGen, r string) *Header {
 }
 
 func NewRpcHeader(h *Header, clientId uint32) *Header {
+	if h.Type&PKG_RPC != PKG_PUSH {
+		if encoded, ok := DefaultHandShake().ConvertRouteIndexToRpc(h.Route); ok {
+			h.RouteEncoded = encoded
+		}
+	}
+
 	return &Header{
 		Type:         h.Type | PKG_RPC,
 		Encoding:     h.Encoding,
@@ -69,6 +75,12 @@ func NewHeaderFromRpc(h *Header) *Header {
 	//For broadcast through backend
 	if t == PKG_RPC_BROADCAST {
 		t = PKG_PUSH
+	}
+
+	if t&^PKG_RPC != PKG_PUSH {
+		if encoded, ok := DefaultHandShake().ConvertRouteIndexFromRpc(h.Route); ok {
+			h.RouteEncoded = encoded
+		}
 	}
 
 	return &Header{
@@ -103,7 +115,7 @@ func (self *Header) Marshal() ([]byte, error) {
 		buffer.WriteUInt16(self.RouteEncoded)
 	}
 
-	if self.Type&PKG_RPC == PKG_RPC {
+	if self.Type.IsRPC() {
 		buffer.WriteUInt32(self.ClientID)
 	}
 
@@ -155,7 +167,7 @@ func ReadHeader(reader io.Reader, header *Header) (int, error) {
 		return n, err
 	}
 
-	if header.Type&PKG_RPC == PKG_RPC {
+	if header.Type.IsRPC() {
 		clientIDBuf := make([]byte, INT_BYTE_SIZE)
 		_, err := reader.Read(clientIDBuf)
 		if err != nil {
@@ -188,7 +200,7 @@ func UnmarshalHeader(buffer []byte, header *Header) (int, error) {
 	// log.Logf("m = %v", m)
 
 	buffer = buffer[m:]
-	if header.Type&PKG_RPC == PKG_RPC {
+	if header.Type.IsRPC() {
 		header.ClientID, err = helpers.ToUInt32(buffer[:4])
 		if err != nil {
 			return 0, err
@@ -295,7 +307,7 @@ func fillIndexRoute(header *Header) {
 		return
 	}
 
-	header.RouteEncoded, _ = HandShakeInstance.GetIndexRoute(header.Route)
+	header.RouteEncoded, _ = DefaultHandShake().GetIndexRoute(header.Route)
 }
 
 func fillStringRoute(header *Header) {
@@ -303,5 +315,5 @@ func fillStringRoute(header *Header) {
 		return
 	}
 
-	header.Route, _ = HandShakeInstance.GetStringRoute(header.RouteEncoded)
+	header.Route, _ = DefaultHandShake().GetStringRoute(header.RouteEncoded)
 }
