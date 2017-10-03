@@ -32,6 +32,8 @@ import (
 )
 
 type ProcessorClient struct {
+	*SettingContainer
+
 	*session.Session
 	sessionManager   *session.SessionManager
 	heartBeatManager filter.IFilter
@@ -49,6 +51,8 @@ type ProcessorClient struct {
 //for server
 func NewProcessorClient(cli transfer.IClient) *ProcessorClient {
 	result := &ProcessorClient{
+		SettingContainer: NewSettingContainer(),
+
 		Session:          session.NewSession(cli),
 		sessionManager:   session.NewSessionManager(),
 		heartBeatManager: heartbeat.NewHeartBeatManager(),
@@ -182,25 +186,32 @@ func (s *ProcessorClient) setupEventLoop() {
 					default:
 						header, bodyBuf, err := s.Recv()
 						if err != nil {
+							// if err != io.EOF {
 							log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
-							s.Disconnect()
-							break Loop
+							// }
+
+							if s.Settings().IsDisconnectOnError {
+								s.Disconnect()
+								break Loop
+							} else {
+								continue Loop
+							}
 						}
 
 						if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
 							log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
 						}
 
-						clientId := header.ClientID
-						if clientId == 0 {
-							clientId = s.ClientID
+						clientID := header.ClientID
+						if clientID == 0 {
+							clientID = s.ClientID
 						}
 
-						sess := s.sessionManager.GetSessionByID(s.ID, clientId)
+						sess := s.sessionManager.GetSessionByID(s.ID, clientID)
 						if sess == nil {
 							sess = session.NewSession(s)
 							sess.Bind(s.ID)
-							sess.BindClientID(clientId)
+							sess.BindClientID(clientID)
 
 							s.sessionManager.Add(sess)
 						}
@@ -225,15 +236,23 @@ func (s *ProcessorClient) setupEventLoop() {
 								results, err := s.callRouteFunc(sess, header, bodyBuf)
 								if err != nil {
 									log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
-									sess.Disconnect()
-									break Loop
+									if s.Settings().IsDisconnectOnError {
+										sess.Disconnect()
+										break Loop
+									} else {
+										continue Loop
+									}
 								}
 								// fmt.Printf(" => Loop result: %#v\n", results)
 								err = s.response(sess, header, results)
 								if err != nil {
 									log.Errorf("Response:\n\terr => %v\n\theader => %#v\n\tresults => %#v", err, header, results)
-									sess.Disconnect()
-									break Loop
+									if s.Settings().IsDisconnectOnError {
+										sess.Disconnect()
+										break Loop
+									} else {
+										continue Loop
+									}
 								}
 							}
 						case pkg.PKG_NOTIFY, pkg.PKG_RPC_NOTIFY:
@@ -241,8 +260,12 @@ func (s *ProcessorClient) setupEventLoop() {
 								_, err := s.callRouteFunc(sess, header, bodyBuf)
 								if err != nil {
 									log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
-									sess.Disconnect()
-									break Loop
+									if s.Settings().IsDisconnectOnError {
+										sess.Disconnect()
+										break Loop
+									} else {
+										continue Loop
+									}
 								}
 							}
 						case pkg.PKG_PUSH, pkg.PKG_RPC_PUSH:

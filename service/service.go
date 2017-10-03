@@ -31,6 +31,7 @@ import (
 
 type Service struct {
 	transfer.IServer
+	*SettingContainer
 	router *router.Router
 
 	Name     string
@@ -47,8 +48,10 @@ type Service struct {
 
 func NewService(name string, serv transfer.IServer) *Service {
 	instance := &Service{
-		Name:             name,
-		Encoding:         defaults.Encoding,
+		Name:     name,
+		Encoding: defaults.Encoding,
+
+		SettingContainer: NewSettingContainer(),
 		IServer:          serv,
 		router:           router.NewRouter(),
 		heartBeatManager: heartbeat.NewHeartBeatManager(),
@@ -85,6 +88,21 @@ func (self *Service) SetEncoding(e pkg.EncodingType) error {
 	return log.NewErrorf("can't find encoder with: %v", e)
 }
 
+func (self *Service) SetSettings(s *Settings) error {
+	err := self.SettingContainer.SetSettings(s)
+	if err != nil {
+		return err
+	}
+
+	self.clientsMutex.Lock()
+	defer self.clientsMutex.Unlock()
+
+	for _, c := range self.clients {
+		c.SetSettings(s)
+	}
+	return nil
+}
+
 func (self *Service) RegistHanlder(obj handler.IHandler) {
 	self.router.Add(self.Name, obj)
 	self.handlers = append(self.handlers, obj)
@@ -116,6 +134,9 @@ func (self *Service) OnError(err error) {
 
 func (self *Service) OnBeforeStop() {
 	log.Log("OnBeforeStop")
+	self.clientsMutex.Lock()
+	defer self.clientsMutex.Unlock()
+
 	for _, client := range self.clients {
 		client.Push(ON_SERVICE_DOWN, true)
 	}
@@ -132,6 +153,7 @@ func (self *Service) OnStopped() {
 func (self *Service) RegistNewClient(client transfer.IClient) *ProcessorClient {
 	log.Log("OnNewClient:", client)
 	serviceClient := NewProcessorClient(client)
+	serviceClient.SetSettings(self.Settings())
 	serviceClient.SetEncoding(self.Encoding)
 	serviceClient.SetRouter(self.router)
 	serviceClient.SetFilters(self.filters)
