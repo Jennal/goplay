@@ -21,7 +21,16 @@ import (
 type Protobuf struct {
 }
 
+type oneOfMarshaler interface {
+	MarshalOneOf() ([]byte, error)
+	UnmarshalOneOf(buf []byte) error
+}
+
 func (self Protobuf) Marshal(obj interface{}) ([]byte, error) {
+	if oneOf, ok := obj.(oneOfMarshaler); ok {
+		return oneOf.MarshalOneOf()
+	}
+
 	pb, ok := obj.(proto.Message)
 	if !ok {
 		return nil, log.NewErrorf("protobuf: convert on wrong type value: %#v", obj)
@@ -30,6 +39,10 @@ func (self Protobuf) Marshal(obj interface{}) ([]byte, error) {
 }
 
 func (self Protobuf) Unmarshal(data []byte, content interface{}) error {
+	if oneOf, ok := content.(oneOfMarshaler); ok {
+		return oneOf.UnmarshalOneOf(data)
+	}
+
 	pb, ok := content.(proto.Message)
 	if !ok {
 		return log.NewErrorf("protobuf: convert on wrong type value: %#v", content)
