@@ -187,7 +187,7 @@ func (s *ProcessorClient) setupEventLoop() {
 						header, bodyBuf, err := s.Recv()
 						if err != nil {
 							// if err != io.EOF {
-							log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+							log.Errorf("Recv:\n\terr => %v\n\theader => %#v\n\tbody(%v) => %#v | %v", err, header, len(bodyBuf), bodyBuf, string(bodyBuf))
 							// }
 
 							if s.Settings().IsDisconnectOnError {
@@ -199,7 +199,7 @@ func (s *ProcessorClient) setupEventLoop() {
 						}
 
 						if header.Type != pkg.PKG_HEARTBEAT && header.Type != pkg.PKG_HEARTBEAT_RESPONSE {
-							log.Logf("Recv:\n\theader => %#v\n\tbody => %#v | %v\n\terr => %v\n", header, bodyBuf, string(bodyBuf), err)
+							log.Logf("Recv:\n\theader => %#v\n\tbody(%v) => %#v | %v\n\terr => %v\n", header, len(bodyBuf), bodyBuf, string(bodyBuf), err)
 						}
 
 						clientID := header.ClientID
@@ -235,7 +235,7 @@ func (s *ProcessorClient) setupEventLoop() {
 							if s.router != nil {
 								results, err := s.callRouteFunc(sess, header, bodyBuf)
 								if err != nil {
-									log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+									log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody(%v) => %#v | %v", err, header, len(bodyBuf), bodyBuf, string(bodyBuf))
 									if s.Settings().IsDisconnectOnError {
 										sess.Disconnect()
 										break Loop
@@ -259,7 +259,7 @@ func (s *ProcessorClient) setupEventLoop() {
 							if s.router != nil {
 								_, err := s.callRouteFunc(sess, header, bodyBuf)
 								if err != nil {
-									log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+									log.Errorf("CallRouteFunc:\n\terr => %v\n\theader => %#v\n\tbody(%v) => %#v | %v", err, header, len(bodyBuf), bodyBuf, string(bodyBuf))
 									if s.Settings().IsDisconnectOnError {
 										sess.Disconnect()
 										break Loop
@@ -275,7 +275,7 @@ func (s *ProcessorClient) setupEventLoop() {
 						case pkg.PKG_HEARTBEAT, pkg.PKG_HEARTBEAT_RESPONSE:
 							fallthrough
 						default:
-							log.Errorf("Can't reach here!!\n\terr => %v\n\theader => %#v\n\tbody => %#v | %v", err, header, bodyBuf, string(bodyBuf))
+							log.Errorf("Can't reach here!!\n\terr => %v\n\theader => %#v\n\tbody(%v) => %#v | %v", err, header, len(bodyBuf), bodyBuf, string(bodyBuf))
 							break
 						}
 					}
@@ -342,7 +342,7 @@ func (s *ProcessorClient) response(sess *session.Session, header *pkg.Header, re
 		}
 	}
 
-	log.Logf("Send:\n\theader => %#v\n\tbody => %#v | %v", respHeader, body, string(body))
+	log.Logf("Send:\n\theader => %#v\n\tbody(%v) => %#v | %v", respHeader, len(body), body, string(body))
 	return sess.Send(&respHeader, body)
 }
 
