@@ -13,14 +13,20 @@
 package helpers
 
 type IDGen struct {
+	minID  uint32
 	maxID  uint32
 	nextID uint32
 }
 
 func NewIDGen(max uint32) *IDGen {
+	return NewIDGen2(0, max)
+}
+
+func NewIDGen2(min, max uint32) *IDGen {
 	return &IDGen{
+		minID:  min,
 		maxID:  max,
-		nextID: 0,
+		nextID: min,
 	}
 }
 
