@@ -15,7 +15,6 @@ package websocket
 
 import (
 	"fmt"
-	"net"
 	"net/http"
 
 	"time"
@@ -100,7 +99,7 @@ func (serv *server) Close() error {
 	return nil
 }
 
-func (serv *server) Addr() net.Addr {
+func (serv *server) Addr() transfer.Addr {
 	//TODO:
 	return nil
 }

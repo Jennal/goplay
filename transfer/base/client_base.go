@@ -89,20 +89,20 @@ func (client *Client) UnregistDelegate(delegate transfer.IClientDelegate) {
 	client.Off(transfer.EVENT_CLIENT_RECVED, delegate)
 }
 
-func (client *Client) LocalAddr() net.Addr {
+func (client *Client) LocalAddr() transfer.Addr {
 	if client.conn == nil {
 		return nil
 	}
 
-	return client.conn.LocalAddr()
+	return transfer.NewAddr(client.conn.LocalAddr())
 }
 
-func (client *Client) RemoteAddr() net.Addr {
+func (client *Client) RemoteAddr() transfer.Addr {
 	if client.conn == nil {
 		return nil
 	}
 
-	return client.conn.RemoteAddr()
+	return transfer.NewAddr(client.conn.RemoteAddr())
 }
 
 func (client *Client) Id() uint32 {

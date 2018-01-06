@@ -26,7 +26,7 @@ type IServerImplement interface {
 	Accept() (transfer.IClient, error)
 	Close() error
 
-	Addr() net.Addr
+	Addr() transfer.Addr
 }
 
 type Server struct {
@@ -86,12 +86,12 @@ func (serv *Server) IsStarted() bool {
 	return serv.isStarted
 }
 
-func (serv *Server) Addr() net.Addr {
+func (serv *Server) Addr() transfer.Addr {
 	if serv.impl.Addr() == nil {
 		return nil
 	}
 
-	return serv.impl.Addr()
+	return transfer.NewAddr(serv.impl.Addr())
 }
 
 func (serv *Server) Clients() map[uint32]transfer.IClient {

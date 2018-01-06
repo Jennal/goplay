@@ -14,8 +14,6 @@
 package transfer
 
 import (
-	"net"
-
 	"github.com/jennal/goplay/event"
 	"github.com/jennal/goplay/pkg"
 )
@@ -33,8 +31,8 @@ type IClient interface {
 	RegistDelegate(delegate IClientDelegate)
 	UnregistDelegate(delegate IClientDelegate)
 
-	LocalAddr() net.Addr
-	RemoteAddr() net.Addr
+	LocalAddr() Addr
+	RemoteAddr() Addr
 	Id() uint32
 
 	IsConnected() bool
@@ -65,7 +63,7 @@ type IServer interface {
 	Port() int
 	IsStarted() bool
 
-	Addr() net.Addr
+	Addr() Addr
 	Clients() map[uint32]IClient
 	GetClientById(uint32) IClient
 
