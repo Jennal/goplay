@@ -14,6 +14,7 @@ package channel
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jennal/goplay/data"
 	"github.com/jennal/goplay/session"
@@ -41,21 +42,26 @@ func (ch *Channel) Name() string {
 	return ch.name
 }
 
-func (ch *Channel) Route() string {
-	return fmt.Sprintf("%v%v", CHANNEL_PREFIX, ch.Name())
+func (ch *Channel) Route(route string) string {
+	route = strings.ToLower(route)
+	if strings.HasPrefix(route, CHANNEL_PREFIX) {
+		return route
+	}
+
+	return fmt.Sprintf("%v%v", CHANNEL_PREFIX, route)
 }
 
 //Broadcast direct to client
-func (ch *Channel) Broadcast(obj interface{}) {
-	route := ch.Route()
+func (ch *Channel) Broadcast(route string, obj interface{}) {
+	route = ch.Route(route)
 	for _, sess := range ch.Sessions() {
 		sess.Push(route, obj)
 	}
 }
 
 //Broadcast across backend
-func (ch *Channel) BroadcastRaw(data []byte) {
-	route := ch.Route()
+func (ch *Channel) BroadcastRaw(route string, data []byte) {
+	route = ch.Route(route)
 	for _, sess := range ch.Sessions() {
 		sess.Broadcast(route, data)
 	}

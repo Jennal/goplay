@@ -67,10 +67,10 @@ func (serv *server) Close() error {
 	return serv.listener.Close()
 }
 
-func (serv *server) Addr() net.Addr {
+func (serv *server) Addr() transfer.Addr {
 	if serv.listener == nil {
 		return nil
 	}
 
-	return serv.listener.Addr()
+	return transfer.NewAddr(serv.listener.Addr())
 }
