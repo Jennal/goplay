@@ -19,12 +19,20 @@ func NewAddr(a net.Addr) Addr {
 }
 
 func (a *addr) IP() string {
+	if a == nil {
+		return ""
+	}
+
 	str := a.String()
 	idx := strings.LastIndex(str, ":")
 	return str[:idx]
 }
 
 func (a *addr) Port() int {
+	if a == nil {
+		return 0
+	}
+
 	str := a.String()
 	idx := strings.LastIndex(str, ":")
 	port, _ := strconv.Atoi(str[idx+1:])
