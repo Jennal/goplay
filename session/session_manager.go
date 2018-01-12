@@ -50,6 +50,10 @@ func (self *SessionManager) Add(sess *Session) {
 }
 
 func (self *SessionManager) Remove(sess *Session) {
+	if sess == nil {
+		return
+	}
+
 	self.Lock()
 	defer self.Unlock()
 
@@ -60,7 +64,18 @@ func (self *SessionManager) Remove(sess *Session) {
 	}
 }
 
+func (self *SessionManager) Clear() {
+	self.Lock()
+	defer self.Unlock()
+
+	self.sessions = make(map[uint32]map[uint32]*Session)
+}
+
 func (self *SessionManager) Exists(sess *Session) bool {
+	if sess == nil {
+		return false
+	}
+
 	s := self.GetSessionByID(sess.ID, sess.ClientID)
 	return s != nil
 }
