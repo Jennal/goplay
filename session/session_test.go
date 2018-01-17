@@ -48,3 +48,12 @@ func TestEvent(t *testing.T) {
 	sess.Emit("1")
 	assert.Equal(t, 2, count)
 }
+
+func TestPushCache(t *testing.T) {
+	sess := NewSession(tcp.NewClient())
+	sess.PushCache("1", 1)
+	// sess.PushCache("2", 2)
+
+	t.Log(sess.PopAllCaches())
+	t.Log(sess.PopAllCaches())
+}

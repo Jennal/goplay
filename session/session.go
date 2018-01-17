@@ -30,6 +30,7 @@ var IDGen = helpers.NewIDGen(math.MaxUint32)
 
 type Session struct {
 	*data.Map
+	pushCache
 	transfer.IClient
 	interfaces.PackageEncodeDecoder
 
@@ -125,4 +126,12 @@ func (s *Session) Broadcast(route string, data []byte) error {
 		header = pkg.NewRpcHeader(header, s.ClientID)
 	}
 	return s.Send(header, data)
+}
+
+func (s *Session) FlushPushCache() {
+	caches := s.PopAllCaches()
+	log.Logf("FlushPushCache: %v %v", len(caches), caches)
+	for _, item := range caches {
+		s.Push(item.Route, item.Data)
+	}
 }

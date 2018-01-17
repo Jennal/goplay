@@ -278,6 +278,8 @@ func (s *ProcessorClient) setupEventLoop() {
 							log.Errorf("Can't reach here!!\n\terr => %v\n\theader => %#v\n\tbody(%v) => %#v | %v", err, header, len(bodyBuf), bodyBuf, string(bodyBuf))
 							break
 						}
+
+						sess.FlushPushCache()
 					}
 				}
 			}, func(err interface{}) {
