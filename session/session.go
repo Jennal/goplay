@@ -130,7 +130,7 @@ func (s *Session) Broadcast(route string, data []byte) error {
 
 func (s *Session) FlushPushCache() {
 	caches := s.PopAllCaches()
-	log.Logf("FlushPushCache: %v %v", len(caches), caches)
+	// log.Logf("FlushPushCache: %v %v", len(caches), caches)
 	for _, item := range caches {
 		s.Push(item.Route, item.Data)
 	}
