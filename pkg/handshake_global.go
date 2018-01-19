@@ -82,7 +82,7 @@ func (r *HandShakeImpl) AddRoutesMap(route string) {
 		r.routesMap = RouteMap{}
 	}
 
-	log.Tracef("Build route map: %v %v", count, route)
+	// log.Tracef("Build route map: %v %v", count, route)
 	r.routesMap[route] = RouteIndex(count)
 }
 
