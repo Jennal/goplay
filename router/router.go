@@ -42,16 +42,16 @@ func NewRouter() *Router {
 	}
 }
 
-func (r *Router) calcRoutesMap() map[string]pkg.RouteIndex {
-	arr := r.GetKeys()
-	m := make(map[string]pkg.RouteIndex)
+// func (r *Router) calcRoutesMap() map[string]pkg.RouteIndex {
+// 	arr := r.GetKeys()
+// 	m := make(map[string]pkg.RouteIndex)
 
-	for i, str := range arr {
-		m[str] = pkg.RouteIndex(i + 1)
-	}
+// 	for i, str := range arr {
+// 		m[str] = pkg.RouteIndex(i + 1)
+// 	}
 
-	return m
-}
+// 	return m
+// }
 
 func (r *Router) GetKeys() []string {
 	arr := []string{}
@@ -80,9 +80,8 @@ func (r *Router) Add(prefix string, obj interface{}) {
 		}
 
 		r.data[path] = NewMethod(obj, method)
+		pkg.DefaultHandShake().AddRoutesMap(path)
 	}
-
-	pkg.DefaultHandShake().UpdateRoutesMap(r.calcRoutesMap())
 	// fmt.Printf("Router: %#v\n", r.data)
 }
 

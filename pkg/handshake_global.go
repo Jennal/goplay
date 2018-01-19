@@ -14,7 +14,7 @@ type HandShake interface {
 
 	MergeRpcRoutesMap(data RouteMap)
 
-	UpdateRoutesMap(data RouteMap)
+	AddRoutesMap(data string)
 	UpdateHandShakeResponse(resp *HandShakeResponse)
 
 	RoutesMap() RouteMap
@@ -76,8 +76,14 @@ func (r *HandShakeImpl) MergeRpcRoutesMap(data RouteMap) {
 	r.rpcRoutesMap.Merge(data)
 }
 
-func (r *HandShakeImpl) UpdateRoutesMap(data RouteMap) {
-	r.routesMap = data
+func (r *HandShakeImpl) AddRoutesMap(route string) {
+	count := len(r.routesMap)
+	if r.routesMap == nil {
+		r.routesMap = RouteMap{}
+	}
+
+	log.Tracef("Build route map: %v %v", count, route)
+	r.routesMap[route] = RouteIndex(count)
 }
 
 func (r *HandShakeImpl) UpdateHandShakeResponse(resp *HandShakeResponse) {
