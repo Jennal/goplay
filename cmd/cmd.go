@@ -37,3 +37,25 @@ func Start(s transfer.IServer) {
 		log.Error(err)
 	}
 }
+
+func StartAll(ss ...transfer.IServer) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill, syscall.SIGQUIT, syscall.SIGILL, syscall.SIGABRT, syscall.SIGBUS, syscall.SIGFPE, syscall.SIGSEGV, syscall.SIGTERM)
+
+	for _, s := range ss {
+		err := s.Start()
+		if err != nil {
+			log.Error(err)
+			return
+		}
+	}
+
+	<-c
+
+	for _, s := range ss {
+		err := s.Stop()
+		if err != nil {
+			log.Error(err)
+		}
+	}
+}
