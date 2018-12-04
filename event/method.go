@@ -37,14 +37,21 @@ func (m *Method) Call(args ...interface{}) []interface{} {
 	isAnyIn := m.method.Type().NumIn() == 1 &&
 		m.method.Type().In(0) == reflect.TypeOf(([]interface{})(nil))
 
-	for i, v := range args {
-		if mt := m.method.Type().In(i); !isAnyIn &&
-			mt.Kind() != reflect.Ptr &&
-			mt.Kind() != reflect.Interface &&
-			reflect.TypeOf(v).Kind() == reflect.Ptr {
-			v = helpers.GetValueFromPtr(v)
+	if isAnyIn {
+		for _, v := range args {
+			vals = append(vals, reflect.ValueOf(v))
 		}
-		vals = append(vals, reflect.ValueOf(v))
+	} else {
+		for i, v := range args {
+			// fmt.Println("method.in(i), i=", i)
+
+			if mt := m.method.Type().In(i); mt.Kind() != reflect.Ptr &&
+				mt.Kind() != reflect.Interface &&
+				reflect.TypeOf(v).Kind() == reflect.Ptr {
+				v = helpers.GetValueFromPtr(v)
+			}
+			vals = append(vals, reflect.ValueOf(v))
+		}
 	}
 
 	result := []interface{}{}
